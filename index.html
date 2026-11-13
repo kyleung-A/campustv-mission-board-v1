@@ -7,7 +7,7 @@
   <!-- Google Font: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -27,14 +27,14 @@
       color: #0F172A;
       -webkit-font-smoothing: antialiased;
     }
-    .modal-backdrop {
-      background-color: rgba(15, 23, 42, 0.55);
-      backdrop-filter: blur(3px);
+    .backdrop-blur-overlay {
+      background-color: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(2px);
     }
     @keyframes fadeSlideUp {
       from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
       }
       to {
         opacity: 1;
@@ -46,17 +46,16 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col overflow-x-hidden selection:bg-indigo-100 selection:text-indigo-900">
+<body class="min-h-screen flex flex-col selection:bg-indigo-100 selection:text-indigo-900">
 
   <!-- =======================================================================
-       TOP NAVIGATION HEADER (Student View shows NO Setup icon/button)
+       TOP NAVIGATION HEADER
        ======================================================================= -->
-  <header class="bg-white/95 backdrop-blur-xs border-b border-slate-200 sticky top-0 z-30">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <!-- Brand Identity & Live Sync Status -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <!-- Brand Identity & Live Connection Pill -->
       <div class="flex items-center gap-3 min-w-0">
         <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm shrink-0">
-          <!-- Camera / Broadcast SVG Icon -->
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
@@ -66,81 +65,132 @@
             <h1 class="text-base sm:text-xl font-bold tracking-tight text-slate-900 truncate">
               CampusTV Mission Board
             </h1>
-            <!-- Non-clickable Sync Status Indicator -->
             <span
-              id="sync-status-badge"
-              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 select-none"
+              id="status-pill"
+              class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80"
             >
-              <span id="sync-status-dot" class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-              <span id="sync-status-label">Demo Preview</span>
+              <span id="status-dot" class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              <span id="status-text">Demo Mode</span>
             </span>
           </div>
-          <p class="text-xs text-slate-500 mt-0.5 truncate">
-            Student Crew Dispatch &amp; Shooting Schedule
-            <span id="last-updated-text" class="text-slate-400"></span>
+          <p id="header-subtitle" class="text-xs text-slate-500 mt-0.5 truncate">
+            Crew Dispatch &amp; Shooting Schedule
           </p>
         </div>
       </div>
 
-      <!-- Header Actions: Refresh + Teacher Controls Mount + Teacher Mode Lock/Exit -->
-      <div class="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-        <!-- Refresh Button (GET from Apps Script) -->
+      <!-- Right Header Actions: Refresh & Teacher Mode -->
+      <div class="flex items-center gap-2 self-start sm:self-auto">
         <button
           type="button"
-          onclick="fetchMissionsFromSheet(true)"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 active:bg-slate-200/70 border border-slate-200 transition-colors cursor-pointer"
-          title="Refresh schedule"
+          id="btn-refresh"
+          onclick="loadBoardData(true)"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 active:bg-slate-200/70 border border-slate-200 transition-colors cursor-pointer"
+          title="Reload schedule"
         >
-          <svg id="refresh-spinner-icon" class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg id="icon-refresh" class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
           <span>Refresh</span>
         </button>
 
-        <!-- Dynamic Header Teacher Actions Mount (Empty in Student View; populated ONLY when Teacher Mode is unlocked) -->
-        <div id="teacher-header-mount" class="contents"></div>
-
-        <!-- Teacher Mode Lock / Exit Button -->
         <button
           type="button"
-          id="btn-teacher-toggle"
-          onclick="handleTeacherToggleClick()"
+          id="btn-teacher-mode"
+          onclick="handleTeacherHeaderClick()"
           class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors cursor-pointer"
         >
-          <svg id="icon-teacher-toggle" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg id="icon-teacher-state" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          <span id="label-teacher-toggle">Teacher Mode</span>
+          <span id="label-teacher-state">Teacher Mode</span>
         </button>
       </div>
     </div>
   </header>
 
   <!-- =======================================================================
-       MAIN CONTENT CONTAINER
+       MAIN CONTENT AREA
        ======================================================================= -->
   <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-5">
 
-    <!-- Dynamic Teacher Control Bar Mount (Empty in Student View; mounted ONLY when Teacher Mode is unlocked) -->
-    <div id="teacher-bar-mount"></div>
+    <!-- =====================================================================
+         TEACHER CONTROL BAR (Visible only when Passcode Unlocked)
+         ===================================================================== -->
+    <section
+      id="teacher-control-bar"
+      class="hidden bg-gradient-to-r from-indigo-50/90 via-white to-emerald-50/70 border border-indigo-200/90 rounded-2xl p-4 sm:p-5 shadow-sm animate-fade-up"
+    >
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3.5">
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-600 text-white">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+              Teacher Active
+            </span>
+            <span class="text-xs font-medium text-slate-500">Mobile &amp; Spreadsheet Dispatch</span>
+          </div>
+          <p class="text-xs sm:text-sm text-slate-600">
+            Quick-add or edit missions below, or open Google Sheets for bulk row entry.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onclick="openMissionDrawer(null)"
+            class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-sm transition-colors cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Quick Add Mission</span>
+          </button>
+
+          <a
+            id="link-open-sheet"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
+          >
+            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Open Google Sheet ↗</span>
+          </a>
+
+          <button
+            type="button"
+            onclick="lockTeacherMode()"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+          >
+            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span>Lock</span>
+          </button>
+        </div>
+      </div>
+    </section>
 
     <!-- =====================================================================
-         STUDENT & DATE FILTER BAR
+         STUDENT VIEW FILTER BAR
          ===================================================================== -->
     <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm">
       <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
         <!-- Filter by Student Dropdown -->
         <div class="md:col-span-5">
-          <label for="filter-student-select" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-            Filter by Student (班別 · 姓名)
+          <label for="filter-student" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            Filter by Student
           </label>
           <div class="relative">
             <select
-              id="filter-student-select"
-              onchange="onStudentFilterChange(this.value)"
+              id="filter-student"
+              onchange="handleStudentFilterChange(this.value)"
               class="w-full appearance-none bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 pr-9 text-sm font-medium text-slate-800 transition-colors outline-none cursor-pointer"
             >
-              <!-- Populated dynamically via JS -->
+              <!-- Populated dynamically -->
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -150,62 +200,51 @@
           </div>
         </div>
 
-        <!-- Filter by Date & Quick Filter Pills -->
+        <!-- Filter by Date & Quick Pills -->
         <div class="md:col-span-7">
-          <label for="filter-date-input" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+          <label for="filter-date" class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
             Filter by Date
           </label>
           <div class="flex flex-wrap items-center gap-2">
-            <!-- Quick Filter Pills: All Dates, Today, Upcoming, Past -->
-            <div class="inline-flex flex-wrap p-1 bg-slate-100 border border-slate-200/80 rounded-xl">
+            <div class="inline-flex p-1 bg-slate-100 border border-slate-200/70 rounded-xl">
               <button
                 type="button"
-                id="pill-date-ALL"
+                id="pill-date-all"
                 onclick="setQuickDateMode('ALL')"
-                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-2xs cursor-pointer"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-2xs cursor-pointer"
               >
                 All Dates
               </button>
               <button
                 type="button"
-                id="pill-date-TODAY"
+                id="pill-date-today"
                 onclick="setQuickDateMode('TODAY')"
-                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 cursor-pointer"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 cursor-pointer"
               >
                 Today
               </button>
               <button
                 type="button"
-                id="pill-date-UPCOMING"
+                id="pill-date-upcoming"
                 onclick="setQuickDateMode('UPCOMING')"
-                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 cursor-pointer"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 cursor-pointer"
               >
                 Upcoming
               </button>
-              <button
-                type="button"
-                id="pill-date-PAST"
-                onclick="setQuickDateMode('PAST')"
-                class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 cursor-pointer"
-              >
-                Past
-              </button>
             </div>
 
-            <!-- Native Date Picker -->
             <input
               type="date"
-              id="filter-date-input"
-              onchange="onDatePickerChange(this.value)"
+              id="filter-date"
+              onchange="handleSpecificDateChange(this.value)"
               class="bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3 py-2 text-xs sm:text-sm font-medium text-slate-800 transition-colors outline-none"
             />
 
-            <!-- Reset Filters Button (Shown only when filters are active) -->
             <button
               type="button"
               id="btn-reset-filters"
               onclick="resetAllFilters()"
-              class="hidden inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors cursor-pointer"
+              class="hidden inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors ml-auto sm:ml-0 cursor-pointer"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -216,23 +255,10 @@
         </div>
       </div>
 
-      <!-- Summary Strip: Matching, Upcoming, Completed & Selected Student Badge -->
-      <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-semibold">
-            Matching: <strong id="stat-matching-count" class="text-slate-900">0</strong>
-          </span>
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold">
-            Upcoming: <strong id="stat-upcoming-count" class="text-indigo-900">0</strong>
-          </span>
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 border border-slate-200/70 font-medium">
-            Completed: <strong id="stat-completed-count" class="text-slate-800">0</strong>
-          </span>
-        </div>
-
-        <div id="selected-student-summary" class="hidden inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-indigo-600 text-white text-xs font-semibold shadow-2xs">
-          <!-- Populated dynamically when a student is selected -->
-        </div>
+      <!-- Filter Summary Row -->
+      <div class="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+        <p id="filter-summary-text">Showing all scheduled missions</p>
+        <div id="student-workload-pill" class="hidden inline-flex items-center gap-2 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-semibold"></div>
       </div>
     </section>
 
@@ -240,7 +266,7 @@
          CHRONOLOGICAL MISSION CARDS FEED
          ===================================================================== -->
     <section id="mission-cards-container" class="space-y-3.5">
-      <!-- Populated dynamically via JS -->
+      <!-- Populated dynamically -->
     </section>
 
   </main>
@@ -249,16 +275,16 @@
        FOOTER
        ======================================================================= -->
   <footer class="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-slate-200/70 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
-    <p>CampusTV Crew Dispatch · Student Mission Board</p>
-    <p id="footer-mode-note">Student View · Read-Only Schedule</p>
+    <p>CampusTV Mission Board · Student Crew Dispatch</p>
+    <p id="footer-sync-timestamp">Ready</p>
   </footer>
 
   <!-- =======================================================================
-       MODAL 1: TEACHER PASSCODE UNLOCK MODAL
+       PASSCODE UNLOCK MODAL
        ======================================================================= -->
   <div
     id="passcode-modal"
-    class="hidden fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4"
+    class="hidden fixed inset-0 z-50 backdrop-blur-overlay flex items-end sm:items-center justify-center p-0 sm:p-4"
     role="dialog"
     aria-modal="true"
     aria-labelledby="passcode-modal-title"
@@ -273,14 +299,14 @@
           </div>
           <div>
             <h2 id="passcode-modal-title" class="text-base sm:text-lg font-bold text-slate-900">Unlock Teacher Mode</h2>
-            <p class="text-xs text-slate-500">Enter Teacher Passcode to edit missions &amp; sheet sync</p>
+            <p id="passcode-modal-subtitle" class="text-xs text-slate-500">Enter your Teacher Passcode to add or edit missions</p>
           </div>
         </div>
         <button
           type="button"
           onclick="closePasscodeModal()"
           class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-          aria-label="Close modal"
+          aria-label="Close passcode dialog"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -288,9 +314,9 @@
         </button>
       </div>
 
-      <form onsubmit="submitTeacherPasscode(event)" class="space-y-4">
+      <form onsubmit="submitPasscodeForm(event)" class="space-y-4">
         <div>
-          <label for="input-teacher-passcode" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+          <label for="input-teacher-passcode" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
             Teacher Passcode
           </label>
           <input
@@ -298,19 +324,27 @@
             id="input-teacher-passcode"
             required
             autocomplete="current-password"
-            placeholder="Enter your Teacher Passcode"
+            placeholder="Enter passcode"
             class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-3 text-sm text-slate-900 outline-none transition-colors"
           />
-          <!-- Demo Mode Hint (Shown automatically when no Apps Script URL is configured) -->
-          <p id="passcode-demo-hint" class="hidden mt-2 text-xs text-indigo-700 bg-indigo-50 border border-indigo-200/80 rounded-lg px-2.5 py-1.5">
-            Demo Mode active — default passcode: <code class="font-bold">CampusTV2026</code>
+          <p id="passcode-demo-hint" class="hidden mt-1.5 text-[11px] text-amber-700">
+            Demo Mode passcode: <code class="bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">CampusTV2026</code>
           </p>
         </div>
 
-        <!-- Inline Error Feedback -->
-        <div id="passcode-error-alert" class="hidden rounded-xl bg-rose-50 border border-rose-200 px-3.5 py-2.5 text-xs font-semibold text-rose-700"></div>
+        <label class="flex items-center gap-2.5 text-xs sm:text-sm text-slate-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            id="checkbox-remember-passcode"
+            checked
+            class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span>Keep unlocked on this device</span>
+        </label>
 
-        <div class="flex items-center justify-end gap-2.5 pt-1">
+        <div id="passcode-error-msg" class="hidden rounded-xl bg-rose-50 border border-rose-200 px-3.5 py-2.5 text-xs font-medium text-rose-700"></div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-2">
           <button
             type="button"
             onclick="closePasscodeModal()"
@@ -320,11 +354,12 @@
           </button>
           <button
             type="submit"
-            id="btn-verify-passcode"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors cursor-pointer"
+            class="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors cursor-pointer"
           >
-            <span id="verify-passcode-spinner" class="hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
             <span>Unlock</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
           </button>
         </div>
       </form>
@@ -332,592 +367,335 @@
   </div>
 
   <!-- =======================================================================
-       DYNAMIC TEACHER-ONLY MODALS MOUNT
-       (Completely absent from the DOM in Student View; mounted ONLY when Teacher Mode is unlocked)
+       QUICK ADD / EDIT MISSION SLIDE-OVER DRAWER (Mobile-Optimized)
        ======================================================================= -->
-  <div id="teacher-modals-mount"></div>
+  <div
+    id="mission-drawer-wrapper"
+    class="hidden fixed inset-0 z-50 overflow-hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="drawer-title"
+  >
+    <!-- Backdrop -->
+    <div
+      id="mission-drawer-backdrop"
+      onclick="closeMissionDrawer()"
+      class="fixed inset-0 backdrop-blur-overlay transition-opacity duration-200 opacity-0"
+    ></div>
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-5 right-5 z-50 pointer-events-none flex flex-col gap-2 max-w-sm"></div>
+    <!-- Slide-Over Panel -->
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
+      <div
+        id="mission-drawer-panel"
+        class="w-screen max-w-lg bg-white shadow-2xl border-l border-slate-200 flex flex-col transform translate-x-full transition-transform duration-200 ease-out"
+      >
+        <!-- Drawer Header -->
+        <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
+          <div>
+            <h2 id="drawer-title" class="text-base sm:text-lg font-bold text-slate-900">Quick Add Mission</h2>
+            <p class="text-xs text-slate-500">Assign crew &amp; sync directly to your schedule</p>
+          </div>
+          <button
+            type="button"
+            onclick="closeMissionDrawer()"
+            class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Close drawer"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Drawer Scrollable Form Body -->
+        <form id="mission-drawer-form" onsubmit="handleSaveMissionForm(event)" class="flex-1 overflow-y-auto p-5 space-y-5">
+          <input type="hidden" id="drawer-mission-id" value="" />
+
+          <!-- 16-Emoji Icon Picker Grid -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+              Mission Icon
+            </label>
+            <div id="drawer-emoji-grid" class="grid grid-cols-8 gap-1.5 sm:gap-2">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Event Title -->
+          <div>
+            <label for="drawer-event-title" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Event Title <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="drawer-event-title"
+              required
+              placeholder="e.g. Inter-House Basketball Semi-Final"
+              class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none"
+            />
+          </div>
+
+          <!-- Date & Session Count Stepper -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
+            <div class="sm:col-span-7">
+              <label for="drawer-event-date" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Date <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="date"
+                id="drawer-event-date"
+                required
+                class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none"
+              />
+            </div>
+
+            <div class="sm:col-span-5">
+              <label for="drawer-event-count" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Count
+              </label>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  onclick="adjustDrawerCount(-1)"
+                  class="w-11 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Decrease count"
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  id="drawer-event-count"
+                  min="1"
+                  max="20"
+                  value="1"
+                  required
+                  class="flex-1 text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-xl py-2 text-sm font-bold text-slate-900 outline-none"
+                />
+                <button
+                  type="button"
+                  onclick="adjustDrawerCount(1)"
+                  class="w-11 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Increase count"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Remarks / Notes -->
+          <div>
+            <label for="drawer-event-notes" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Remarks / Notes
+            </label>
+            <textarea
+              id="drawer-event-notes"
+              rows="2"
+              placeholder="e.g. School Hall · 15:45 · Bring 70-200mm lens & wireless mic"
+              class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
+            ></textarea>
+          </div>
+
+          <!-- Crew Assignment with Quick Search & Tap-to-Toggle Pills -->
+          <div class="space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label for="drawer-crew-search" class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Crew Assignment (<span id="drawer-crew-selected-count" class="text-indigo-600">0 selected</span>)
+              </label>
+              <span id="drawer-sheet-rows-hint" class="text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+                0 rows in Sheet
+              </span>
+            </div>
+
+            <div class="relative">
+              <input
+                type="text"
+                id="drawer-crew-search"
+                oninput="renderDrawerCrewPills()"
+                placeholder="Search by class (4A), student ID (s2024001), or name..."
+                class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-xl pl-9 pr-3.5 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none"
+              />
+              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            <div
+              id="drawer-crew-pills"
+              class="flex flex-wrap gap-2 max-h-56 overflow-y-auto p-3 bg-slate-50 border border-slate-200/80 rounded-2xl"
+            >
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </form>
+
+        <!-- Drawer Sticky Footer -->
+        <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+          <button
+            type="button"
+            onclick="closeMissionDrawer()"
+            class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-200/70 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="mission-drawer-form"
+            id="btn-drawer-save"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 shadow-sm transition-colors cursor-pointer"
+          >
+            <svg id="icon-save-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <svg id="icon-save-check" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            <span id="label-drawer-save">Save &amp; Sync</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Stack -->
+  <div id="toast-stack" class="fixed bottom-5 right-5 z-50 pointer-events-none flex flex-col gap-2 max-w-sm"></div>
 
   <!-- =======================================================================
-       APPLICATION SCRIPT
+       APPLICATION LOGIC
        ======================================================================= -->
   <script>
-    /**
-     * =========================================================================
-     * PRE-DEPLOYMENT CONFIGURATION (Paste your URLs here before uploading to GitHub Pages as index.html)
-     * =========================================================================
-     */
-    const DEFAULT_SCRIPT_URL = ""; // Paste your Google Apps Script Web App URL (https://script.google.com/macros/s/.../exec) here
-    const DEFAULT_SHEET_URL = ""; // Optional: Paste your Google Sheet URL here
-    const DEMO_PASSCODE = "CampusTV2026"; // Fallback passcode when running offline/demo mode without Apps Script URL
+    // =========================================================================
+    // GOOGLE SHEETS CONFIGURATION (Edit these two lines before hosting on GitHub)
+    // =========================================================================
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4xD1hyvFPnLGMyNdjXauBF0OKZvBZ8FnrJ1rgPOeGymauW39lGz3-KGS8_9LGza1M/exec
+"; // Paste your Google Apps Script Web App URL (ending in /exec) here
+    const GOOGLE_SHEET_URL  = "https://docs.google.com/spreadsheets/d/1PlJaCMj1Jw5RTyjrsUGOuJy0Xtx4wf8lJDLs07_gOwM/edit?usp=drive_link"; // Optional: Paste your Google Sheet URL here (auto-detected from Apps Script if left blank)
 
-    // LocalStorage Keys
-    const STORAGE_KEYS = {
-      SCRIPT_URL: "campustv_script_url_v2",
-      SHEET_URL: "campustv_sheet_url_v2",
-      DEMO_MISSIONS: "campustv_demo_missions_v2",
-    };
+    // =========================================================================
+    // CONSTANTS & SAMPLE DEMO DATA (Used when GOOGLE_SCRIPT_URL is empty)
+    // =========================================================================
+    const DEMO_PASSCODE = "CampusTV2026";
+    const STORAGE_KEY_PASSCODE = "campustv_teacher_passcode_v2";
+    const STORAGE_KEY_DEMO_MISSIONS = "campustv_demo_missions_v2";
 
-    // 18 Curated Mission Emoji Icons
-    const MISSION_ICON_PRESETS = [
-      "🎬", "📸", "🎥", "🎤", "🏀", "⚽",
-      "🏃", "🎵", "🎭", "🏆", "🎓", "📢",
-      "🔬", "🎨", "🎉", "🏫", "📰", "✨"
+    const CURATED_EMOJIS = [
+      "🎬", "📸", "🎥", "🎤",
+      "🏆", "🎓", "🎶", "🏀",
+      "🎭", "📣", "📰", "🔬",
+      "🎨", "🎉", "🏫", "✨",
     ];
 
-    /**
-     * Date Utility: Local YYYY-MM-DD formatting & day offsets
-     */
-    function getLocalDateIso(offsetDays = 0) {
+    function getLocalDateOffset(daysOffset = 0) {
       const d = new Date();
-      d.setDate(d.getDate() + offsetDays);
+      d.setDate(d.getDate() + daysOffset);
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, "0");
       const dd = String(d.getDate()).padStart(2, "0");
       return `${yyyy}-${mm}-${dd}`;
     }
 
-    const TODAY_ISO = getLocalDateIso(0);
+    const TODAY_ISO = getLocalDateOffset(0);
 
-    /**
-     * Demo Students Roster (20 Hong Kong secondary school students: 班別, 學號, 學生編號, 姓名)
-     */
     const DEMO_STUDENTS = [
-      { className: "4A", classNo: "01", studentId: "S2026001", name: "Chan Ho Yin" },
-      { className: "4A", classNo: "08", studentId: "S2026002", name: "Wong Tsz Ching" },
-      { className: "4A", classNo: "14", studentId: "S2026003", name: "Cheung Lok Man" },
-      { className: "4A", classNo: "22", studentId: "S2026004", name: "Lau Wing Sze" },
-      { className: "4B", classNo: "03", studentId: "S2026005", name: "Ng Ka Chun" },
-      { className: "4B", classNo: "11", studentId: "S2026006", name: "Lee Pak Hei" },
-      { className: "4B", classNo: "19", studentId: "S2026007", name: "Lam Hiu Tung" },
-      { className: "4B", classNo: "26", studentId: "S2026008", name: "Ho Chun Kit" },
-      { className: "4C", classNo: "05", studentId: "S2026009", name: "Yeung Sum Yi" },
-      { className: "4C", classNo: "17", studentId: "S2026010", name: "Tam Yat Long" },
-      { className: "5A", classNo: "02", studentId: "S2026011", name: "Kwok Tsz Yan" },
-      { className: "5A", classNo: "09", studentId: "S2026012", name: "Tsang Kin Pong" },
-      { className: "5A", classNo: "16", studentId: "S2026013", name: "Chow Pui Ying" },
-      { className: "5A", classNo: "24", studentId: "S2026014", name: "Yip Tsz Fung" },
-      { className: "5B", classNo: "06", studentId: "S2026015", name: "Tang Wing Lam" },
-      { className: "5B", classNo: "13", studentId: "S2026016", name: "Fung Cheuk Yin" },
-      { className: "5C", classNo: "04", studentId: "S2026017", name: "Cheng Ka Man" },
-      { className: "5C", classNo: "12", studentId: "S2026018", name: "Au Yeung Nok" },
-      { className: "5C", classNo: "20", studentId: "S2026019", name: "Poon Sze Nga" },
-      { className: "5C", classNo: "28", studentId: "S2026020", name: "Mak Ho Nam" },
+      { className: "5A", classNo: "04", studentId: "s2024001", name: "Chan Ho Yin 陳浩然" },
+      { className: "5A", classNo: "18", studentId: "s2024002", name: "Wong Tsz Ching 黃梓晴" },
+      { className: "5B", classNo: "07", studentId: "s2024003", name: "Cheung Lok Man 張樂文" },
+      { className: "5C", classNo: "12", studentId: "s2024004", name: "Lau Wing Sze 劉詠詩" },
+      { className: "5C", classNo: "23", studentId: "s2024005", name: "Ng Ka Chun 吳家俊" },
+      { className: "4A", classNo: "03", studentId: "s2024006", name: "Lee Pak Hei 李柏希" },
+      { className: "4A", classNo: "15", studentId: "s2024007", name: "Lam Hiu Tung 林曉彤" },
+      { className: "4B", classNo: "09", studentId: "s2024008", name: "Ho Chun Kit 何俊傑" },
+      { className: "4B", classNo: "24", studentId: "s2024009", name: "Yeung Sum Yi 楊心怡" },
+      { className: "4C", classNo: "02", studentId: "s2024010", name: "Tam Yat Long 譚逸朗" },
+      { className: "4C", classNo: "19", studentId: "s2024011", name: "Kwok Tsz Yan 郭芷欣" },
+      { className: "3A", classNo: "05", studentId: "s2024012", name: "Yip Tsz Fung 葉子鋒" },
+      { className: "3A", classNo: "16", studentId: "s2024013", name: "Tang Wing Lam 鄧詠琳" },
+      { className: "3B", classNo: "08", studentId: "s2024014", name: "Fung Cheuk Yin 馮卓賢" },
+      { className: "3B", classNo: "22", studentId: "s2024015", name: "Cheng Ka Man 鄭嘉敏" },
+      { className: "3C", classNo: "14", studentId: "s2024016", name: "Poon Sze Nga 潘詩雅" },
     ];
 
-    /**
-     * Demo Missions (5 realistic CampusTV shoots around today's date)
-     */
-    function buildDemoMissions() {
+    function buildDefaultDemoMissions() {
       return [
         {
-          id: "m_demo_1",
-          date: getLocalDateIso(0),
-          title: "Inter-House Basketball Final",
-          crew: ["Chan Ho Yin", "Lee Pak Hei", "Yip Tsz Fung"],
-          crewDetails: [
-            { studentId: "S2026001", name: "Chan Ho Yin", className: "4A", classNo: "01" },
-            { studentId: "S2026006", name: "Lee Pak Hei", className: "4B", classNo: "03" },
-            { studentId: "S2026014", name: "Yip Tsz Fung", className: "5A", classNo: "24" },
-          ],
+          id: "demo_1",
+          date: getLocalDateOffset(0),
+          title: "Inter-House Basketball Semi-Final",
+          crew: ["Chan Ho Yin 陳浩然", "Lee Pak Hei 李柏希", "Yip Tsz Fung 葉子鋒"],
           count: 1,
-          notes: "School Hall · 15:45–17:15 · Courtside gimbal highlight reel + 70-200mm action photos",
+          notes: "School Hall · 15:45–17:15 · Courtside gimbal highlight video + 70-200mm action photos",
           icon: "🏀",
           status: "Upcoming",
         },
         {
-          id: "m_demo_2",
-          date: getLocalDateIso(0),
-          title: "Morning Assembly Live Broadcast",
-          crew: ["Wong Tsz Ching", "Kwok Tsz Yan"],
-          crewDetails: [
-            { studentId: "S2026002", name: "Wong Tsz Ching", className: "4A", classNo: "08" },
-            { studentId: "S2026011", name: "Kwok Tsz Yan", className: "5A", classNo: "02" },
-          ],
+          id: "demo_2",
+          date: getLocalDateOffset(0),
+          title: "STEM Robotics Club Lunchtime Demo",
+          crew: ["Wong Tsz Ching 黃梓晴", "Lam Hiu Tung 林曉彤"],
           count: 1,
-          notes: "AV Control Room · 08:00–08:40 · Switcher operation & principal announcement mic check",
-          icon: "📢",
-          status: "Upcoming",
-        },
-        {
-          id: "m_demo_3",
-          date: getLocalDateIso(3),
-          title: "Science Fair Highlights",
-          crew: ["Cheung Lok Man", "Lam Hiu Tung", "Tang Wing Lam"],
-          crewDetails: [
-            { studentId: "S2026003", name: "Cheung Lok Man", className: "4A", classNo: "14" },
-            { studentId: "S2026007", name: "Lam Hiu Tung", className: "4B", classNo: "19" },
-            { studentId: "S2026015", name: "Tang Wing Lam", className: "5B", classNo: "06" },
-          ],
-          count: 1,
-          notes: "Covered Playground & STEM Lab · 13:00–15:30 · 2-minute CampusTV News feature & student demos",
+          notes: "Innovation Lab Rm 402 · 12:50–13:30 · 90-sec CampusTV News recap & student interviews",
           icon: "🔬",
           status: "Upcoming",
         },
         {
-          id: "m_demo_4",
-          date: getLocalDateIso(7),
-          title: "Annual Swimming Gala",
-          crew: ["Chan Ho Yin", "Ng Ka Chun", "Tsang Kin Pong", "Cheng Ka Man"],
-          crewDetails: [
-            { studentId: "S2026001", name: "Chan Ho Yin", className: "4A", classNo: "01" },
-            { studentId: "S2026005", name: "Ng Ka Chun", className: "4B", classNo: "03" },
-            { studentId: "S2026012", name: "Tsang Kin Pong", className: "5A", classNo: "09" },
-            { studentId: "S2026017", name: "Cheng Ka Man", className: "5C", classNo: "04" },
-          ],
-          count: 2,
-          notes: "Kowloon Park Swimming Pool · Full Day (2 Sessions) · Bring rain covers & telephoto lenses",
-          icon: "🏆",
+          id: "demo_3",
+          date: getLocalDateOffset(4),
+          title: "Student Council Inauguration Assembly",
+          crew: ["Chan Ho Yin 陳浩然", "Cheung Lok Man 張樂文", "Ho Chun Kit 何俊傑", "Tang Wing Lam 鄧詠琳"],
+          count: 1,
+          notes: "Main Auditorium · 08:15–09:30 · Balcony tripod wide recording + stage badge-pinning stills",
+          icon: "🎓",
           status: "Upcoming",
         },
         {
-          id: "m_demo_5",
-          date: getLocalDateIso(-4),
-          title: "Principal Interview",
-          crew: ["Lau Wing Sze", "Chow Pui Ying"],
-          crewDetails: [
-            { studentId: "S2026004", name: "Lau Wing Sze", className: "4A", classNo: "22" },
-            { studentId: "S2026013", name: "Chow Pui Ying", className: "5A", classNo: "16" },
-          ],
-          count: 1,
-          notes: "Conference Room 201 · Two-camera key light setup + dual wireless lavalier mics",
-          icon: "🎤",
+          id: "demo_4",
+          date: getLocalDateOffset(8),
+          title: "Annual Music Concert Dress Rehearsal",
+          crew: ["Lau Wing Sze 劉詠詩", "Yeung Sum Yi 楊心怡", "Tam Yat Long 譚逸朗", "Fung Cheuk Yin 馮卓賢"],
+          count: 2,
+          notes: "School Hall · 14:00–17:30 (2 sessions) · Bring f/2.8 prime lenses & wireless mic for conductor",
+          icon: "🎶",
+          status: "Upcoming",
+        },
+        {
+          id: "demo_5",
+          date: getLocalDateOffset(-5),
+          title: "Annual Athletics Meet Opening Ceremony",
+          crew: ["Chan Ho Yin 陳浩然", "Ng Ka Chun 吳家俊", "Kwok Tsz Yan 郭芷欣"],
+          count: 2,
+          notes: "Wan Chai Sports Ground · Full-day trackside photo & finish-line highlight coverage",
+          icon: "🏆",
           status: "Completed",
         },
       ];
     }
 
-    /**
-     * Latest Google Apps Script (`Code.gs`) source embedded for Teacher Setup Modal
-     */
-    const CODE_GS_TEMPLATE = `// ============================================================================
-// CampusTV Mission Board — Google Apps Script (Code.gs)
-// Required Google Sheet Tabs:
-//   1. "Students" -> Row 1: 班別 | 學號 | 學生編號 | 姓名
-//   2. "Missions" -> Row 1: Date | Event | Student ID | Student Name | Count | Remarks | Icon
-// ============================================================================
-
-const TEACHER_PASSCODE = "CampusTV2026"; // Change this to your secret passcode
-const SHEET_STUDENTS = "Students";
-const SHEET_MISSIONS = "Missions";
-
-function doGet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const tz = Session.getScriptTimeZone();
-  const todayStr = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
-
-  const { sSheet, mSheet } = ensureSheets_(ss);
-
-  // 1. Read Students (班別, 學號, 學生編號, 姓名)
-  const studentRows = sSheet.getDataRange().getValues();
-  const idToStudent = {};
-  const students = [];
-
-  studentRows.slice(1).forEach(r => {
-    const className = String(r[0] || "").trim();
-    const classNo   = String(r[1] || "").trim();
-    const studentId = String(r[2] || "").trim();
-    const name      = String(r[3] || "").trim();
-    if (name) {
-      const stu = { className, classNo, studentId, name };
-      students.push(stu);
-      if (studentId) idToStudent[studentId] = stu;
-    }
-  });
-
-  // 2. Read Missions & group rows with same Date + Event into Mission Cards
-  const missionRows = mSheet.getDataRange().getValues();
-  const grouped = {};
-  const missions = [];
-
-  missionRows.slice(1).forEach((r, idx) => {
-    if (!r[0] && !r[1]) return;
-
-    const dateStr = r[0] instanceof Date
-      ? Utilities.formatDate(r[0], tz, "yyyy-MM-dd")
-      : String(r[0] || "").trim();
-    const eventName = String(r[1] || "").trim();
-    const studentId = String(r[2] || "").trim();
-    const rawName   = String(r[3] || "").trim();
-    const count     = Number(r[4]) > 0 ? Number(r[4]) : 1;
-    const remarks   = String(r[5] || "").trim();
-    const icon      = String(r[6] || "").trim() || "🎬";
-
-    const matched = idToStudent[studentId];
-    const resolvedName = (rawName && rawName !== "ID Not Found")
-      ? rawName
-      : (matched ? matched.name : studentId);
-
-    const key = dateStr + "__" + eventName;
-    if (!grouped[key]) {
-      grouped[key] = {
-        id: "m_" + (idx + 2),
-        date: dateStr,
-        title: eventName,
-        crew: [],
-        crewDetails: [],
-        count: count,
-        notes: remarks,
-        icon: icon,
-        status: dateStr && dateStr < todayStr ? "Completed" : "Upcoming"
-      };
-      missions.push(grouped[key]);
-    }
-
-    if (resolvedName && grouped[key].crew.indexOf(resolvedName) === -1) {
-      grouped[key].crew.push(resolvedName);
-      grouped[key].crewDetails.push({
-        studentId: studentId,
-        name: resolvedName,
-        className: matched ? matched.className : "",
-        classNo: matched ? matched.classNo : ""
-      });
-    }
-
-    if (remarks && grouped[key].notes.indexOf(remarks) === -1) {
-      grouped[key].notes = grouped[key].notes
-        ? grouped[key].notes + " | " + remarks
-        : remarks;
-    }
-  });
-
-  return jsonResponse_({
-    ok: true,
-    sheetUrl: ss.getUrl(),
-    students: students,
-    missions: missions
-  });
-}
-
-function doPost(e) {
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-
-  try {
-    const payload = JSON.parse(e.postData.contents || "{}");
-
-    if (payload.passcode !== TEACHER_PASSCODE) {
-      return jsonResponse_({ ok: false, error: "Incorrect Teacher Passcode" });
-    }
-
-    // Immediate Passcode Verification Ping
-    if (payload.action === "verify") {
-      return jsonResponse_({ ok: true, verified: true });
-    }
-
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
-    const { sSheet, mSheet } = ensureSheets_(ss);
-
-    // Reverse lookup: Student Name -> Student ID (學生編號)
-    const studentRows = sSheet.getDataRange().getValues();
-    const nameToId = {};
-    studentRows.slice(1).forEach(r => {
-      const sid = String(r[2] || "").trim();
-      const sname = String(r[3] || "").trim();
-      if (sname && sid) nameToId[sname.toLowerCase()] = sid;
-    });
-
-    if (Array.isArray(payload.missions)) {
-      const headers = ["Date", "Event", "Student ID", "Student Name", "Count", "Remarks", "Icon"];
-      const outputRows = [headers];
-      let rowNum = 2;
-
-      payload.missions.forEach(m => {
-        const details = Array.isArray(m.crewDetails) ? m.crewDetails : [];
-        const crewList = (Array.isArray(m.crew) && m.crew.length > 0) ? m.crew : [""];
-
-        crewList.forEach((studentName, idx) => {
-          const detailMatch = details[idx] && details[idx].studentId ? details[idx].studentId : "";
-          const sid = detailMatch || nameToId[String(studentName || "").toLowerCase()] || "";
-          const formula = '=IF(C' + rowNum + '="","",IFERROR(VLOOKUP(C' + rowNum + ',' + SHEET_STUDENTS + '!$C:$D,2,FALSE),"ID Not Found"))';
-
-          outputRows.push([
-            m.date || "",
-            m.title || "",
-            sid,
-            formula,
-            Number(m.count) > 0 ? Number(m.count) : 1,
-            m.notes || "",
-            m.icon || "🎬"
-          ]);
-          rowNum++;
-        });
-      });
-
-      mSheet.clearContents();
-      mSheet.getRange(1, 1, outputRows.length, headers.length).setValues(outputRows);
-      if (outputRows.length > 1) {
-        mSheet.getRange(2, 1, outputRows.length - 1, 1).setNumberFormat("yyyy-mm-dd");
-      }
-    }
-
-    return jsonResponse_({ ok: true });
-  } catch (err) {
-    return jsonResponse_({ ok: false, error: err.message });
-  } finally {
-    lock.releaseLock();
-  }
-}
-
-// Auto-insert VLOOKUP formula when typing Student ID directly in Google Sheets
-function onEdit(e) {
-  if (!e || !e.range) return;
-  const sheet = e.range.getSheet();
-  if (sheet.getName() !== SHEET_MISSIONS) return;
-
-  const startRow = e.range.getRow();
-  const numRows = e.range.getNumRows();
-  const startCol = e.range.getColumn();
-  const endCol = startCol + e.range.getNumColumns() - 1;
-
-  if (startRow >= 2 && ((startCol <= 3 && endCol >= 3) || (startCol <= 2 && endCol >= 2))) {
-    for (let r = startRow; r < startRow + numRows; r++) {
-      const eventVal = sheet.getRange(r, 2).getValue();
-      const sidVal = sheet.getRange(r, 3).getValue();
-      if (sidVal !== "" && sheet.getRange(r, 4).getFormula() === "") {
-        sheet.getRange(r, 4).setFormula(
-          '=IF(C' + r + '="","",IFERROR(VLOOKUP(C' + r + ',' + SHEET_STUDENTS + '!$C:$D,2,FALSE),"ID Not Found"))'
-        );
-      }
-      if ((eventVal !== "" || sidVal !== "") && sheet.getRange(r, 5).getValue() === "") {
-        sheet.getRange(r, 5).setValue(1);
-      }
-      if ((eventVal !== "" || sidVal !== "") && sheet.getRange(r, 7).getValue() === "") {
-        sheet.getRange(r, 7).setValue("🎬");
-      }
-    }
-  }
-}
-
-function ensureSheets_(ss) {
-  let sSheet = ss.getSheetByName(SHEET_STUDENTS);
-  if (!sSheet) {
-    sSheet = ss.insertSheet(SHEET_STUDENTS);
-    sSheet.appendRow(["班別", "學號", "學生編號", "姓名"]);
-  }
-  let mSheet = ss.getSheetByName(SHEET_MISSIONS);
-  if (!mSheet) {
-    mSheet = ss.insertSheet(SHEET_MISSIONS);
-    mSheet.appendRow(["Date", "Event", "Student ID", "Student Name", "Count", "Remarks", "Icon"]);
-  }
-  return { sSheet, mSheet };
-}
-
-function jsonResponse_(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}`;
-
     // =========================================================================
     // APPLICATION STATE
     // =========================================================================
     const state = {
-      scriptUrl: "",
-      sheetUrl: "",
-      isLiveConnected: false,
+      isLiveMode: Boolean(GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.trim()),
+      detectedSheetUrl: (GOOGLE_SHEET_URL || "").trim(),
       isTeacherUnlocked: false,
       teacherPasscode: "",
+      pendingSaveRetry: false,
+      confirmDeleteId: null,
       students: [],
       missions: [],
       filters: {
-        studentKey: "ALL", // Matches studentId if available, else student name
-        quickDate: "ALL",  // 'ALL' | 'TODAY' | 'UPCOMING' | 'PAST' | 'SPECIFIC'
+        studentName: "ALL",
+        dateMode: "ALL", // 'ALL' | 'TODAY' | 'UPCOMING' | 'SPECIFIC'
         specificDate: "",
       },
-      editor: {
+      drawer: {
         selectedIcon: "🎬",
-        selectedStudentIds: [],
+        selectedCrewNames: [],
       },
-      pendingDeleteId: null,
     };
 
     // =========================================================================
-    // INITIALIZATION & URL STORAGE
-    // =========================================================================
-    function initConfigAndData() {
-      let storedScriptUrl = "";
-      let storedSheetUrl = "";
-      try {
-        storedScriptUrl = localStorage.getItem(STORAGE_KEYS.SCRIPT_URL) || "";
-        storedSheetUrl = localStorage.getItem(STORAGE_KEYS.SHEET_URL) || "";
-      } catch (e) {
-        console.warn("LocalStorage unavailable:", e);
-      }
-
-      state.scriptUrl = (storedScriptUrl || DEFAULT_SCRIPT_URL || "").trim();
-      state.sheetUrl = (storedSheetUrl || DEFAULT_SHEET_URL || "").trim();
-
-      state.students = DEMO_STUDENTS.map((s) => ({ ...s }));
-
-      try {
-        const savedDemo = localStorage.getItem(STORAGE_KEYS.DEMO_MISSIONS);
-        if (savedDemo) {
-          const parsed = JSON.parse(savedDemo);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            state.missions = parsed;
-            return;
-          }
-        }
-      } catch (_) {}
-
-      state.missions = buildDemoMissions();
-    }
-
-    function persistUrls() {
-      try {
-        if (state.scriptUrl) {
-          localStorage.setItem(STORAGE_KEYS.SCRIPT_URL, state.scriptUrl);
-        } else {
-          localStorage.removeItem(STORAGE_KEYS.SCRIPT_URL);
-        }
-        if (state.sheetUrl) {
-          localStorage.setItem(STORAGE_KEYS.SHEET_URL, state.sheetUrl);
-        } else {
-          localStorage.removeItem(STORAGE_KEYS.SHEET_URL);
-        }
-      } catch (e) {
-        console.warn("Unable to save URLs:", e);
-      }
-    }
-
-    function persistDemoMissions() {
-      try {
-        localStorage.setItem(STORAGE_KEYS.DEMO_MISSIONS, JSON.stringify(state.missions));
-      } catch (_) {}
-    }
-
-    // =========================================================================
-    // GOOGLE APPS SCRIPT FETCH (GET) & SAVE (POST)
-    // =========================================================================
-    async function fetchMissionsFromSheet(showToastFeedback = false) {
-      const spinner = document.getElementById("refresh-spinner-icon");
-      if (spinner) spinner.classList.add("animate-spin");
-
-      try {
-        if (state.scriptUrl) {
-          const response = await fetch(state.scriptUrl);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
-
-          if (data.sheetUrl && !state.sheetUrl) {
-            state.sheetUrl = String(data.sheetUrl).trim();
-            persistUrls();
-          }
-
-          if (Array.isArray(data.students) && data.students.length > 0) {
-            state.students = data.students.map((s) => ({
-              className: String(s.className || "").trim(),
-              classNo: String(s.classNo || "").trim(),
-              studentId: String(s.studentId || "").trim(),
-              name: String(s.name || "").trim(),
-            }));
-          }
-
-          if (Array.isArray(data.missions)) {
-            state.missions = data.missions.map((m, idx) => {
-              const dateStr = String(m.date || "").trim();
-              const status =
-                m.status === "Completed" || m.status === "Upcoming"
-                  ? m.status
-                  : dateStr && dateStr < TODAY_ISO
-                  ? "Completed"
-                  : "Upcoming";
-
-              return {
-                id: m.id || `m_live_${idx + 1}`,
-                date: dateStr,
-                title: String(m.title || m.event || "Untitled Mission").trim(),
-                crew: Array.isArray(m.crew) ? m.crew.map(String) : [],
-                crewDetails: Array.isArray(m.crewDetails) ? m.crewDetails : [],
-                count: Number(m.count) > 0 ? Number(m.count) : 1,
-                notes: String(m.notes || m.remarks || "").trim(),
-                icon: String(m.icon || "🎬").trim(),
-                status,
-              };
-            });
-          }
-
-          state.isLiveConnected = true;
-          if (showToastFeedback) showToast("Synced latest missions from Google Sheet.");
-        } else {
-          state.isLiveConnected = false;
-          if (showToastFeedback) showToast("Demo Preview refreshed.");
-        }
-      } catch (err) {
-        console.error("Error fetching sheet data:", err);
-        state.isLiveConnected = false;
-        if (showToastFeedback) {
-          showToast("Could not connect to Apps Script URL. Showing cached/demo data.", "error");
-        }
-      } finally {
-        if (spinner) spinner.classList.remove("animate-spin");
-        updateSyncBadgeUI();
-        if (state.isTeacherUnlocked) {
-          renderTeacherChrome(); // Refresh Open Google Sheet button visibility if sheetUrl auto-populated
-        }
-        renderStudentFilterDropdown();
-        renderMissionBoard();
-      }
-    }
-
-    async function saveMissionsToBackend() {
-      if (!state.scriptUrl) {
-        persistDemoMissions();
-        showToast("Saved in Demo Preview mode.");
-        return true;
-      }
-
-      try {
-        const res = await fetch(state.scriptUrl, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({
-            action: "save",
-            passcode: state.teacherPasscode,
-            missions: getChronologicalMissions(),
-          }),
-        });
-
-        const data = await res.json();
-        if (!data.ok) {
-          showToast(data.error || "Incorrect Teacher Passcode.", "error");
-          return false;
-        }
-
-        showToast("Saved & synced to Google Sheet!");
-        return true;
-      } catch (err) {
-        console.error("Save POST failed:", err);
-        showToast("Updated board locally, but failed to sync to Google Sheet.", "error");
-        return false;
-      }
-    }
-
-    function updateSyncBadgeUI() {
-      const badge = document.getElementById("sync-status-badge");
-      const dot = document.getElementById("sync-status-dot");
-      const label = document.getElementById("sync-status-label");
-      const updatedText = document.getElementById("last-updated-text");
-
-      if (state.isLiveConnected) {
-        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 select-none";
-        dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500";
-        label.textContent = "Live Sheet";
-      } else {
-        badge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 select-none";
-        dot.className = "w-1.5 h-1.5 rounded-full bg-amber-500";
-        label.textContent = "Demo Preview";
-      }
-
-      const nowStr = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      updatedText.textContent = ` · Checked ${nowStr}`;
-    }
-
-    // =========================================================================
-    // HELPERS & FORMATTING
+    // UTILITIES
     // =========================================================================
     function escapeHTML(str) {
       if (str === null || str === undefined) return "";
@@ -929,146 +707,295 @@ function jsonResponse_(obj) {
         .replace(/'/g, "&#039;");
     }
 
-    function formatDisplayDate(isoStr) {
-      if (!isoStr) return "Date TBD";
-      const parts = isoStr.split("-").map(Number);
-      if (parts.length !== 3 || parts.some(isNaN)) return isoStr;
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      const weekday = d.toLocaleDateString("en-GB", { weekday: "short" });
-      const day = d.toLocaleDateString("en-GB", { day: "numeric" });
-      const month = d.toLocaleDateString("en-GB", { month: "short" });
-      const year = d.getFullYear();
+    function formatReadableDate(isoDate) {
+      if (!isoDate) return "Date TBD";
+      const parts = String(isoDate).split("-").map(Number);
+      if (parts.length !== 3 || parts.some(isNaN)) return isoDate;
+      const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+      const weekday = dt.toLocaleDateString("en-GB", { weekday: "short" });
+      const day = dt.toLocaleDateString("en-GB", { day: "numeric" });
+      const month = dt.toLocaleDateString("en-GB", { month: "short" });
+      const year = dt.getFullYear();
       return `${weekday}, ${day} ${month} ${year}`;
     }
 
-    function isMissionCompleted(m) {
-      if (m.status === "Completed") return true;
-      if (m.date && m.date < TODAY_ISO) return true;
-      return false;
+    function showToast(message, variant = "success") {
+      const stack = document.getElementById("toast-stack");
+      const el = document.createElement("div");
+      const palette =
+        variant === "error"
+          ? "bg-rose-900 text-white border-rose-700"
+          : "bg-slate-900 text-white border-slate-700";
+      const dotColor = variant === "error" ? "bg-rose-400" : "bg-emerald-400";
+
+      el.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium shadow-lg border ${palette} animate-fade-up`;
+      el.innerHTML = `
+        <span class="w-2 h-2 rounded-full ${dotColor} shrink-0"></span>
+        <span>${escapeHTML(message)}</span>
+      `;
+      stack.appendChild(el);
+
+      setTimeout(() => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(6px)";
+        el.style.transition = "all 0.2s ease";
+        setTimeout(() => el.remove(), 220);
+      }, 3000);
     }
 
-    function getChronologicalMissions() {
-      // Upcoming / Today sorted earliest first; Completed sorted most recent first
+    function getStudentByName(name) {
+      return state.students.find((s) => s.name === name) || null;
+    }
+
+    function getSortedMissions() {
       return [...state.missions].sort((a, b) => {
-        const aDone = isMissionCompleted(a);
-        const bDone = isMissionCompleted(b);
-        if (aDone !== bDone) return aDone ? 1 : -1;
-        if (!aDone) {
+        const aCompleted = a.date < TODAY_ISO || a.status === "Completed";
+        const bCompleted = b.date < TODAY_ISO || b.status === "Completed";
+        if (aCompleted !== bCompleted) return aCompleted ? 1 : -1;
+        if (!aCompleted) {
           const cmp = (a.date || "").localeCompare(b.date || "");
           return cmp !== 0 ? cmp : (a.title || "").localeCompare(b.title || "");
-        } else {
-          const cmp = (b.date || "").localeCompare(a.date || "");
-          return cmp !== 0 ? cmp : (a.title || "").localeCompare(b.title || "");
         }
+        const cmp = (b.date || "").localeCompare(a.date || "");
+        return cmp !== 0 ? cmp : (a.title || "").localeCompare(b.title || "");
       });
     }
 
-    function missionMatchesStudent(mission, studentKey) {
-      if (!studentKey || studentKey === "ALL") return true;
-      const stu = state.students.find((s) => (s.studentId || s.name) === studentKey);
-      if (Array.isArray(mission.crewDetails) && mission.crewDetails.length > 0) {
-        const idMatch = mission.crewDetails.some((cd) => cd.studentId && cd.studentId === studentKey);
-        if (idMatch) return true;
-      }
-      if (stu && Array.isArray(mission.crew)) {
-        return mission.crew.includes(stu.name);
-      }
-      return Array.isArray(mission.crew) && mission.crew.includes(studentKey);
+    function getActiveMissionCountForStudent(studentName) {
+      return state.missions.filter(
+        (m) => m.date >= TODAY_ISO && m.status !== "Completed" && Array.isArray(m.crew) && m.crew.includes(studentName)
+      ).length;
     }
 
-    function getActiveMissionCountForStudent(student) {
-      const key = student.studentId || student.name;
-      return state.missions.filter((m) => !isMissionCompleted(m) && missionMatchesStudent(m, key)).length;
-    }
-
-    function getTotalSessionsForStudent(student) {
-      const key = student.studentId || student.name;
+    function getTotalSessionCountForStudent(studentName) {
       return state.missions
-        .filter((m) => missionMatchesStudent(m, key))
-        .reduce((sum, m) => sum + (Number(m.count) || 1), 0);
+        .filter((m) => Array.isArray(m.crew) && m.crew.includes(studentName))
+        .reduce((acc, m) => acc + (Number(m.count) || 1), 0);
     }
 
-    function copyTextFallback(text) {
+    // =========================================================================
+    // DATA LOADING & GOOGLE APPS SCRIPT SYNC
+    // =========================================================================
+    function restoreSavedPasscodeSession() {
       try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        return true;
-      } catch (_) {
-        return false;
+        const remembered = localStorage.getItem(STORAGE_KEY_PASSCODE);
+        const sessionVal = sessionStorage.getItem(STORAGE_KEY_PASSCODE);
+        const code = remembered || sessionVal;
+        if (code) {
+          state.isTeacherUnlocked = true;
+          state.teacherPasscode = code;
+        }
+      } catch (_) {}
+    }
+
+    function loadDemoData() {
+      state.students = DEMO_STUDENTS.map((s) => ({ ...s }));
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY_DEMO_MISSIONS);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            state.missions = parsed;
+            return;
+          }
+        }
+      } catch (_) {}
+      state.missions = buildDefaultDemoMissions();
+    }
+
+    function saveDemoMissionsLocally() {
+      try {
+        localStorage.setItem(STORAGE_KEY_DEMO_MISSIONS, JSON.stringify(state.missions));
+      } catch (_) {}
+    }
+
+    async function loadBoardData(notify = false) {
+      const refreshIcon = document.getElementById("icon-refresh");
+      refreshIcon.classList.add("animate-spin");
+
+      const scriptUrl = (GOOGLE_SCRIPT_URL || "").trim();
+
+      if (!scriptUrl) {
+        state.isLiveMode = false;
+        loadDemoData();
+        refreshIcon.classList.remove("animate-spin");
+        updateHeaderStatusPill("demo");
+        updateFooterTimestamp();
+        renderStudentDropdown();
+        renderMissionCards();
+        if (notify) showToast("Refreshed Demo Mode schedule");
+        return;
+      }
+
+      try {
+        const res = await fetch(scriptUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (!data || data.ok === false) {
+          throw new Error(data && data.error ? data.error : "Invalid response from Apps Script");
+        }
+
+        if (data.sheetUrl && !state.detectedSheetUrl) {
+          state.detectedSheetUrl = String(data.sheetUrl).trim();
+        }
+
+        if (Array.isArray(data.students)) {
+          state.students = data.students.map((s) => ({
+            className: String(s.className || "").trim(),
+            classNo: String(s.classNo || "").trim(),
+            studentId: String(s.studentId || "").trim(),
+            name: String(s.name || "").trim(),
+          }));
+        }
+
+        if (Array.isArray(data.missions)) {
+          state.missions = data.missions.map((m, idx) => {
+            const dateStr = String(m.date || "").trim();
+            return {
+              id: m.id || `sheet_m_${idx + 1}`,
+              date: dateStr,
+              title: String(m.title || "Untitled Mission").trim(),
+              crew: Array.isArray(m.crew) ? m.crew.map((c) => String(c).trim()).filter(Boolean) : [],
+              crewDetails: Array.isArray(m.crewDetails) ? m.crewDetails : [],
+              count: Number(m.count) > 0 ? Number(m.count) : 1,
+              notes: String(m.notes || "").trim(),
+              icon: String(m.icon || "🎬").trim(),
+              status: m.status || (dateStr && dateStr < TODAY_ISO ? "Completed" : "Upcoming"),
+            };
+          });
+        }
+
+        state.isLiveMode = true;
+        updateHeaderStatusPill("live");
+        syncTeacherUIState();
+        updateFooterTimestamp();
+        renderStudentDropdown();
+        renderMissionCards();
+        if (notify) showToast("Synced with Google Sheet");
+      } catch (err) {
+        console.error("Failed to fetch Google Sheet data:", err);
+        updateHeaderStatusPill("error");
+        if (state.missions.length === 0) {
+          loadDemoData();
+          renderStudentDropdown();
+          renderMissionCards();
+        }
+        if (notify) showToast("Could not connect to Google Sheet", "error");
+      } finally {
+        refreshIcon.classList.remove("animate-spin");
       }
     }
 
-    function showToast(message, type = "success") {
-      const container = document.getElementById("toast-container");
-      const toast = document.createElement("div");
-      const colorClass =
-        type === "error"
-          ? "bg-rose-900 text-white border-rose-700"
-          : "bg-slate-900 text-white border-slate-700";
+    function updateHeaderStatusPill(mode) {
+      const pill = document.getElementById("status-pill");
+      const dot = document.getElementById("status-dot");
+      const text = document.getElementById("status-text");
 
-      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium shadow-xl border ${colorClass} animate-fade-up`;
-      toast.innerHTML = `
-        <span class="w-2 h-2 rounded-full ${type === "error" ? "bg-rose-400" : "bg-emerald-400"} shrink-0"></span>
-        <span>${escapeHTML(message)}</span>
-      `;
-      container.appendChild(toast);
+      if (mode === "live") {
+        pill.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200";
+        dot.className = "w-1.5 h-1.5 rounded-full bg-emerald-500";
+        text.textContent = "Live Sheet";
+      } else if (mode === "error") {
+        pill.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200";
+        dot.className = "w-1.5 h-1.5 rounded-full bg-rose-500";
+        text.textContent = "Sync Error";
+      } else {
+        pill.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200/80";
+        dot.className = "w-1.5 h-1.5 rounded-full bg-amber-500";
+        text.textContent = "Demo Mode";
+      }
+    }
 
-      setTimeout(() => {
-        toast.style.opacity = "0";
-        toast.style.transform = "translateY(6px)";
-        toast.style.transition = "all 0.2s ease";
-        setTimeout(() => toast.remove(), 220);
-      }, 2800);
+    function updateFooterTimestamp() {
+      const el = document.getElementById("footer-sync-timestamp");
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      el.textContent = state.isLiveMode
+        ? `Live Sheet synced at ${timeStr}`
+        : `Demo Preview · ${timeStr}`;
+    }
+
+    /**
+     * Persists current missions to Google Apps Script via CORS-safe POST
+     * (No custom Content-Type header so browsers avoid OPTIONS preflight).
+     */
+    async function persistMissionsToBackend() {
+      const scriptUrl = (GOOGLE_SCRIPT_URL || "").trim();
+      const orderedMissions = getSortedMissions();
+
+      if (!scriptUrl) {
+        saveDemoMissionsLocally();
+        updateFooterTimestamp();
+        showToast("Saved in Demo Mode");
+        return { ok: true };
+      }
+
+      try {
+        // IMPORTANT: Omit Content-Type header so browser sends text/plain without CORS preflight
+        const response = await fetch(scriptUrl, {
+          method: "POST",
+          body: JSON.stringify({
+            passcode: state.teacherPasscode,
+            missions: orderedMissions,
+          }),
+        });
+
+        const result = await response.json();
+        if (!result || !result.ok) {
+          const errorMsg = (result && result.error) || "Incorrect Teacher Passcode";
+          return { ok: false, error: errorMsg };
+        }
+
+        updateFooterTimestamp();
+        showToast("Synced to Google Sheet");
+        return { ok: true };
+      } catch (err) {
+        console.error("POST sync error:", err);
+        return { ok: false, error: "Network error while syncing to Google Sheet" };
+      }
     }
 
     // =========================================================================
-    // STUDENT VIEW: FILTERING & MISSION CARD RENDERING
+    // STUDENT VIEW & FILTERING
     // =========================================================================
-    function renderStudentFilterDropdown() {
-      const select = document.getElementById("filter-student-select");
-      const previousKey = state.filters.studentKey;
+    function renderStudentDropdown() {
+      const select = document.getElementById("filter-student");
+      const previousSelection = state.filters.studentName;
 
       const sortedStudents = [...state.students].sort((a, b) => {
-        const cCmp = (a.className || "").localeCompare(b.className || "");
-        if (cCmp !== 0) return cCmp;
-        return (a.classNo || "").localeCompare(b.classNo || "");
+        const classCmp = (a.className || "").localeCompare(b.className || "");
+        if (classCmp !== 0) return classCmp;
+        const noCmp = (a.classNo || "").localeCompare(b.classNo || "");
+        if (noCmp !== 0) return noCmp;
+        return (a.name || "").localeCompare(b.name || "");
       });
 
       let optionsHTML = `<option value="ALL">All Crew Members (${sortedStudents.length})</option>`;
-
-      sortedStudents.forEach((stu) => {
-        const key = stu.studentId || stu.name;
-        const activeCount = getActiveMissionCountForStudent(stu);
-        const classPart = stu.className ? `${stu.className} · ` : "";
-        const idPart = stu.studentId ? ` (${stu.studentId})` : "";
-        const badgePart = ` — ${activeCount} active`;
-        optionsHTML += `<option value="${escapeHTML(key)}">${escapeHTML(classPart)}${escapeHTML(stu.name)}${escapeHTML(idPart)}${escapeHTML(badgePart)}</option>`;
+      sortedStudents.forEach((s) => {
+        const activeCount = getActiveMissionCountForStudent(s.name);
+        const labelPrefix = s.className ? `${s.className} · ` : "";
+        optionsHTML += `<option value="${escapeHTML(s.name)}">${escapeHTML(labelPrefix)}${escapeHTML(s.name)} (${activeCount})</option>`;
       });
 
       select.innerHTML = optionsHTML;
 
-      if (previousKey !== "ALL" && sortedStudents.some((s) => (s.studentId || s.name) === previousKey)) {
-        select.value = previousKey;
+      if (previousSelection !== "ALL" && sortedStudents.some((s) => s.name === previousSelection)) {
+        select.value = previousSelection;
       } else {
-        state.filters.studentKey = "ALL";
+        state.filters.studentName = "ALL";
         select.value = "ALL";
       }
     }
 
-    function onStudentFilterChange(val) {
-      state.filters.studentKey = val;
-      renderMissionBoard();
+    function handleStudentFilterChange(studentName) {
+      state.filters.studentName = studentName;
+      renderMissionCards();
     }
 
     function setQuickDateMode(mode) {
-      state.filters.quickDate = mode;
-      const dateInput = document.getElementById("filter-date-input");
+      state.filters.dateMode = mode;
+      const dateInput = document.getElementById("filter-date");
       if (mode === "TODAY") {
         state.filters.specificDate = TODAY_ISO;
         dateInput.value = TODAY_ISO;
@@ -1076,51 +1003,56 @@ function jsonResponse_(obj) {
         state.filters.specificDate = "";
         dateInput.value = "";
       }
-      updateDatePillStyles();
-      renderMissionBoard();
+      updateQuickDatePills();
+      renderMissionCards();
     }
 
-    function onDatePickerChange(val) {
+    function handleSpecificDateChange(val) {
       if (val) {
+        state.filters.dateMode = "SPECIFIC";
         state.filters.specificDate = val;
-        state.filters.quickDate = "SPECIFIC";
       } else {
+        state.filters.dateMode = "ALL";
         state.filters.specificDate = "";
-        state.filters.quickDate = "ALL";
       }
-      updateDatePillStyles();
-      renderMissionBoard();
+      updateQuickDatePills();
+      renderMissionCards();
     }
 
-    function updateDatePillStyles() {
-      ["ALL", "TODAY", "UPCOMING", "PAST"].forEach((mode) => {
-        const btn = document.getElementById(`pill-date-${mode}`);
-        if (!btn) return;
-        if (state.filters.quickDate === mode) {
-          btn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-2xs cursor-pointer";
+    function updateQuickDatePills() {
+      const map = [
+        { id: "pill-date-all", mode: "ALL" },
+        { id: "pill-date-today", mode: "TODAY" },
+        { id: "pill-date-upcoming", mode: "UPCOMING" },
+      ];
+      map.forEach(({ id, mode }) => {
+        const btn = document.getElementById(id);
+        if (state.filters.dateMode === mode) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-indigo-700 shadow-2xs cursor-pointer";
         } else {
-          btn.className = "px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 cursor-pointer";
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 cursor-pointer";
         }
       });
     }
 
     function resetAllFilters() {
-      state.filters.studentKey = "ALL";
-      state.filters.quickDate = "ALL";
+      state.filters.studentName = "ALL";
+      state.filters.dateMode = "ALL";
       state.filters.specificDate = "";
-      document.getElementById("filter-student-select").value = "ALL";
-      document.getElementById("filter-date-input").value = "";
-      updateDatePillStyles();
-      renderMissionBoard();
+      document.getElementById("filter-student").value = "ALL";
+      document.getElementById("filter-date").value = "";
+      updateQuickDatePills();
+      renderMissionCards();
     }
 
-    function renderMissionBoard() {
+    function renderMissionCards() {
       const container = document.getElementById("mission-cards-container");
+      const summaryEl = document.getElementById("filter-summary-text");
       const resetBtn = document.getElementById("btn-reset-filters");
-      const studentSummaryEl = document.getElementById("selected-student-summary");
+      const workloadPill = document.getElementById("student-workload-pill");
 
-      const { studentKey, quickDate, specificDate } = state.filters;
-      const hasActiveFilters = studentKey !== "ALL" || quickDate !== "ALL" || specificDate !== "";
+      const { studentName, dateMode, specificDate } = state.filters;
+      const hasActiveFilters = studentName !== "ALL" || dateMode !== "ALL" || specificDate !== "";
 
       if (hasActiveFilters) {
         resetBtn.classList.remove("hidden");
@@ -1128,63 +1060,61 @@ function jsonResponse_(obj) {
         resetBtn.classList.add("hidden");
       }
 
-      const selectedStu =
-        studentKey !== "ALL"
-          ? state.students.find((s) => (s.studentId || s.name) === studentKey)
-          : null;
-
-      if (selectedStu) {
-        const activeCount = getActiveMissionCountForStudent(selectedStu);
-        const totalSessions = getTotalSessionsForStudent(selectedStu);
-        studentSummaryEl.classList.remove("hidden");
-        studentSummaryEl.innerHTML = `
-          <span>${escapeHTML(selectedStu.className)} · ${escapeHTML(selectedStu.name)}</span>
-          <span class="px-1.5 py-0.5 rounded bg-indigo-500 text-white text-[11px]">
-            ${activeCount} Active · ${totalSessions} Total Count
-          </span>
+      if (studentName !== "ALL") {
+        const stu = getStudentByName(studentName);
+        const totalSessions = getTotalSessionCountForStudent(studentName);
+        const displayName = stu && stu.className ? `${stu.className} · ${stu.name}` : studentName;
+        workloadPill.classList.remove("hidden");
+        workloadPill.innerHTML = `
+          <span>${escapeHTML(displayName)}</span>
+          <span class="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[11px]">Total Count: ${totalSessions}</span>
         `;
       } else {
-        studentSummaryEl.classList.add("hidden");
+        workloadPill.classList.add("hidden");
       }
 
-      const chronological = getChronologicalMissions();
-      const filteredMissions = chronological.filter((m) => {
-        if (!missionMatchesStudent(m, studentKey)) return false;
-        const completed = isMissionCompleted(m);
-        if (quickDate === "TODAY" && m.date !== TODAY_ISO) return false;
-        if (quickDate === "UPCOMING" && (completed || m.date < TODAY_ISO)) return false;
-        if (quickDate === "PAST" && !completed) return false;
-        if (quickDate === "SPECIFIC" && specificDate && m.date !== specificDate) return false;
+      const sorted = getSortedMissions();
+      const visibleMissions = sorted.filter((m) => {
+        if (studentName !== "ALL" && (!Array.isArray(m.crew) || !m.crew.includes(studentName))) {
+          return false;
+        }
+        if (dateMode === "TODAY" && m.date !== TODAY_ISO) return false;
+        if (dateMode === "UPCOMING" && m.date < TODAY_ISO) return false;
+        if (dateMode === "SPECIFIC" && specificDate && m.date !== specificDate) return false;
         return true;
       });
 
-      // Update Summary Strip counters
-      const matchingCount = filteredMissions.length;
-      const upcomingCount = filteredMissions.filter((m) => !isMissionCompleted(m)).length;
-      const completedCount = filteredMissions.filter((m) => isMissionCompleted(m)).length;
+      const summaryParts = [
+        `Showing <strong class="text-slate-800">${visibleMissions.length}</strong> mission${visibleMissions.length === 1 ? "" : "s"}`,
+      ];
+      if (studentName !== "ALL") {
+        const stu = getStudentByName(studentName);
+        const label = stu && stu.className ? `${stu.className} · ${stu.name}` : studentName;
+        summaryParts.push(`for <strong class="text-indigo-700">${escapeHTML(label)}</strong>`);
+      }
+      if (dateMode === "TODAY") {
+        summaryParts.push(`on <strong class="text-slate-800">Today (${formatReadableDate(TODAY_ISO)})</strong>`);
+      } else if (dateMode === "UPCOMING") {
+        summaryParts.push(`from <strong class="text-slate-800">Today onwards</strong>`);
+      } else if (dateMode === "SPECIFIC" && specificDate) {
+        summaryParts.push(`on <strong class="text-slate-800">${formatReadableDate(specificDate)}</strong>`);
+      }
+      summaryEl.innerHTML = summaryParts.join(" ");
 
-      document.getElementById("stat-matching-count").textContent = matchingCount;
-      document.getElementById("stat-upcoming-count").textContent = upcomingCount;
-      document.getElementById("stat-completed-count").textContent = completedCount;
-
-      if (filteredMissions.length === 0) {
+      if (visibleMissions.length === 0) {
         container.innerHTML = `
           <div class="bg-white border border-slate-200 rounded-2xl p-10 text-center shadow-sm">
             <div class="w-12 h-12 rounded-2xl bg-slate-100 text-2xl flex items-center justify-center mx-auto mb-3">
-              🎬
+              📅
             </div>
-            <h3 class="text-base font-bold text-slate-900 mb-1">No matching missions found</h3>
+            <h3 class="text-base font-bold text-slate-900 mb-1">No missions match your filter</h3>
             <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mb-4">
-              There are no CampusTV missions matching your selected student or date filter.
+              Try clearing your student or date filter to view all CampusTV assignments.
             </p>
             ${
               hasActiveFilters
-                ? `<button
-                    type="button"
-                    onclick="resetAllFilters()"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer"
-                  >
-                    Clear Filters
+                ? `<button type="button" onclick="resetAllFilters()" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer">
+                    Reset Filters
                   </button>`
                 : ""
             }
@@ -1193,81 +1123,77 @@ function jsonResponse_(obj) {
         return;
       }
 
-      container.innerHTML = filteredMissions
+      container.innerHTML = visibleMissions
         .map((m) => {
-          const isToday = m.date === TODAY_ISO && !isMissionCompleted(m);
-          const isCompleted = isMissionCompleted(m);
-          const countVal = Number(m.count) || 1;
+          const isToday = m.date === TODAY_ISO;
+          const isCompleted = m.date < TODAY_ISO || m.status === "Completed";
+          const sessionCount = Number(m.count) || 1;
 
-          // Card border & Status pill
-          let cardBorder = "border-slate-200 border-l-4 border-l-indigo-500";
-          let statusPill = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-200/80">Upcoming</span>`;
+          let cardFrameClass = "border-slate-200 border-l-4 border-l-indigo-500";
+          let statusBadgeHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-200/80">Upcoming</span>`;
 
-          if (isToday) {
-            cardBorder = "border-emerald-200 border-l-4 border-l-emerald-500 ring-1 ring-emerald-500/15";
-            statusPill = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-emerald-600 text-white shadow-2xs">Today</span>`;
+          if (isToday && !isCompleted) {
+            cardFrameClass = "border-indigo-200 border-l-4 border-l-indigo-600 ring-1 ring-indigo-500/10";
+            statusBadgeHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-indigo-600 text-white shadow-2xs">Today · Upcoming</span>`;
           } else if (isCompleted) {
-            cardBorder = "border-slate-200/90 border-l-4 border-l-slate-300 opacity-80";
-            statusPill = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">Completed</span>`;
+            cardFrameClass = "border-slate-200/90 border-l-4 border-l-slate-300 opacity-80";
+            statusBadgeHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide bg-slate-100 text-slate-600 border border-slate-200">Completed</span>`;
           }
 
-          // Count pill
-          const countText = countVal > 1 ? `${countVal} Sessions` : "Count: 1";
-          const countStyle =
-            countVal > 1
-              ? "bg-amber-50 text-amber-800 border-amber-200/90 font-semibold"
+          const countBadgeClass =
+            sessionCount > 1
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200/80 font-semibold"
               : "bg-slate-50 text-slate-600 border-slate-200/80 font-medium";
 
-          // Build unified crew list with class + name + highlight matching
-          const crewItems = buildUnifiedCrewList(m);
-          const crewHTML =
-            crewItems.length > 0
-              ? crewItems
-                  .map((item) => {
-                    const isHighlighted =
-                      studentKey !== "ALL" &&
-                      ((item.studentId && item.studentId === studentKey) ||
-                        (selectedStu && item.name === selectedStu.name));
+          // Crew Pills formatted as "班別 · 姓名"
+          const crewList = Array.isArray(m.crew) ? m.crew : [];
+          const crewPillsHTML =
+            crewList.length > 0
+              ? crewList
+                  .map((memberName) => {
+                    const stu = getStudentByName(memberName);
+                    const detail = Array.isArray(m.crewDetails)
+                      ? m.crewDetails.find((d) => d.name === memberName)
+                      : null;
+                    const classLabel = (stu && stu.className) || (detail && detail.className) || "";
+                    const isSelectedStudent = studentName !== "ALL" && memberName === studentName;
 
-                    const pillClass = isHighlighted
+                    const pillStyle = isSelectedStudent
                       ? "bg-indigo-600 text-white border-indigo-600 font-semibold shadow-2xs"
                       : "bg-slate-50 text-slate-700 border-slate-200/90 font-medium";
 
                     return `
-                      <span
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs border ${pillClass}"
-                        title="${escapeHTML(item.studentId ? `ID: ${item.studentId}` : item.name)}"
-                      >
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs border ${pillStyle}">
                         ${
-                          item.className
-                            ? `<span class="${isHighlighted ? "text-indigo-200" : "text-slate-400"} font-bold">${escapeHTML(item.className)}</span>`
+                          classLabel
+                            ? `<span class="${isSelectedStudent ? "text-indigo-200" : "text-slate-400"} font-semibold">${escapeHTML(classLabel)} ·</span>`
                             : ""
                         }
-                        <span>${escapeHTML(item.name)}</span>
+                        <span>${escapeHTML(memberName)}</span>
                       </span>
                     `;
                   })
                   .join("")
               : `<span class="text-xs italic text-slate-400">No crew assigned yet</span>`;
 
-          // Teacher-Only Edit & Delete Controls (Rendered ONLY when state.isTeacherUnlocked === true)
+          // Teacher Mode Card Actions (Edit & Delete with inline 2-step delete confirmation)
           let teacherCardActionsHTML = "";
           if (state.isTeacherUnlocked) {
-            if (state.pendingDeleteId === m.id) {
+            if (state.confirmDeleteId === m.id) {
               teacherCardActionsHTML = `
-                <div class="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 rounded-xl px-2.5 py-1 shrink-0">
-                  <span class="text-xs font-semibold text-rose-700">Delete?</span>
+                <div class="inline-flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-xl">
+                  <span class="text-[11px] font-semibold text-rose-700">Delete?</span>
                   <button
                     type="button"
                     onclick="confirmDeleteMission('${escapeHTML(m.id)}')"
-                    class="px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 cursor-pointer"
+                    class="px-2 py-0.5 rounded-lg text-[11px] font-bold text-white bg-rose-600 hover:bg-rose-700 cursor-pointer"
                   >
                     Yes
                   </button>
                   <button
                     type="button"
                     onclick="cancelDeleteMission()"
-                    class="px-2 py-1 rounded-lg text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer"
+                    class="px-2 py-0.5 rounded-lg text-[11px] font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 cursor-pointer"
                   >
                     No
                   </button>
@@ -1278,8 +1204,8 @@ function jsonResponse_(obj) {
                 <div class="inline-flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
-                    onclick="openMissionEditorModal('${escapeHTML(m.id)}')"
-                    class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200/70 border border-indigo-200/80 transition-colors cursor-pointer"
+                    onclick="openMissionDrawer('${escapeHTML(m.id)}')"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors cursor-pointer"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -1289,8 +1215,7 @@ function jsonResponse_(obj) {
                   <button
                     type="button"
                     onclick="requestDeleteMission('${escapeHTML(m.id)}')"
-                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 active:bg-rose-200/70 border border-rose-200/80 transition-colors cursor-pointer"
-                    title="Delete mission"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors cursor-pointer"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1303,9 +1228,9 @@ function jsonResponse_(obj) {
           }
 
           return `
-            <article class="bg-white border ${cardBorder} rounded-2xl p-4 sm:p-5 shadow-sm transition-all">
+            <article class="bg-white border ${cardFrameClass} rounded-2xl p-4 sm:p-5 shadow-sm transition-all">
               <div class="flex items-start gap-3.5 sm:gap-4">
-                <!-- Large Rounded Emoji Icon Badge -->
+                <!-- Left: Large Mission Emoji Icon in Soft Rounded Tile -->
                 <div
                   class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-2xl sm:text-3xl shrink-0 select-none"
                   aria-hidden="true"
@@ -1313,51 +1238,47 @@ function jsonResponse_(obj) {
                   ${escapeHTML(m.icon || "🎬")}
                 </div>
 
-                <!-- Card Main Details -->
+                <!-- Right: Scannable Mission Body -->
                 <div class="flex-1 min-w-0">
-                  <!-- Top Metadata Row -->
                   <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                     <div class="flex flex-wrap items-center gap-2">
-                      ${statusPill}
+                      ${statusBadgeHTML}
                       <span class="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-700">
                         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        ${escapeHTML(formatDisplayDate(m.date))}
+                        ${escapeHTML(formatReadableDate(m.date))}
                       </span>
-                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] border ${countStyle}">
-                        ${escapeHTML(countText)}
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] border ${countBadgeClass}">
+                        Count: ${sessionCount}
                       </span>
                     </div>
 
                     ${teacherCardActionsHTML}
                   </div>
 
-                  <!-- Event Title -->
                   <h2 class="text-base sm:text-lg font-bold text-slate-900 leading-snug mb-2">
                     ${escapeHTML(m.title)}
                   </h2>
 
-                  <!-- Remarks Box (Displayed if remarks exist) -->
                   ${
                     m.notes
                       ? `
-                        <div class="mb-3 bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-600 flex items-start gap-2">
-                          <svg class="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span>${escapeHTML(m.notes)}</span>
-                        </div>
-                      `
+                      <div class="mb-3 bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-600 flex items-start gap-2">
+                        <svg class="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>${escapeHTML(m.notes)}</span>
+                      </div>
+                    `
                       : ""
                   }
 
-                  <!-- Crew Member Pills -->
                   <div class="pt-2.5 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
                     <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mr-1">
-                      Crew (${crewItems.length}):
+                      Crew (${crewList.length}):
                     </span>
-                    ${crewHTML}
+                    ${crewPillsHTML}
                   </div>
                 </div>
               </div>
@@ -1367,56 +1288,66 @@ function jsonResponse_(obj) {
         .join("");
     }
 
-    function buildUnifiedCrewList(mission) {
-      if (Array.isArray(mission.crewDetails) && mission.crewDetails.length > 0) {
-        return mission.crewDetails.map((cd) => {
-          const matched = state.students.find((s) => s.studentId === cd.studentId || s.name === cd.name);
-          return {
-            studentId: cd.studentId || (matched ? matched.studentId : ""),
-            name: cd.name || (matched ? matched.name : ""),
-            className: cd.className || (matched ? matched.className : ""),
-            classNo: cd.classNo || (matched ? matched.classNo : ""),
-          };
-        });
-      }
-      if (Array.isArray(mission.crew)) {
-        return mission.crew.map((name) => {
-          const matched = state.students.find((s) => s.name === name);
-          return {
-            studentId: matched ? matched.studentId : "",
-            name,
-            className: matched ? matched.className : "",
-            classNo: matched ? matched.classNo : "",
-          };
-        });
-      }
-      return [];
-    }
+    // =========================================================================
+    // TEACHER MODE & PASSCODE AUTHENTICATION
+    // =========================================================================
+    function syncTeacherUIState() {
+      const btn = document.getElementById("btn-teacher-mode");
+      const icon = document.getElementById("icon-teacher-state");
+      const label = document.getElementById("label-teacher-state");
+      const controlBar = document.getElementById("teacher-control-bar");
+      const sheetLink = document.getElementById("link-open-sheet");
 
-    // =========================================================================
-    // TEACHER MODE: PASSCODE AUTHENTICATION & STRICT DOM MOUNTING/UNMOUNTING
-    // =========================================================================
-    function handleTeacherToggleClick() {
       if (state.isTeacherUnlocked) {
-        exitTeacherMode();
+        btn.className = "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer";
+        icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />`;
+        label.textContent = "Teacher Active";
+        controlBar.classList.remove("hidden");
+
+        const activeSheetUrl = (GOOGLE_SHEET_URL || "").trim() || state.detectedSheetUrl;
+        if (activeSheetUrl) {
+          sheetLink.href = activeSheetUrl;
+          sheetLink.classList.remove("hidden");
+        } else {
+          sheetLink.classList.add("hidden");
+        }
       } else {
-        openPasscodeModal();
+        btn.className = "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors cursor-pointer";
+        icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />`;
+        label.textContent = "Teacher Mode";
+        controlBar.classList.add("hidden");
       }
     }
 
-    function openPasscodeModal() {
+    function handleTeacherHeaderClick() {
+      if (state.isTeacherUnlocked) {
+        document.getElementById("teacher-control-bar").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } else {
+        openPasscodeModal(false);
+      }
+    }
+
+    function openPasscodeModal(isRetry = false) {
       const modal = document.getElementById("passcode-modal");
       const input = document.getElementById("input-teacher-passcode");
-      const errAlert = document.getElementById("passcode-error-alert");
+      const errorBox = document.getElementById("passcode-error-msg");
       const demoHint = document.getElementById("passcode-demo-hint");
+      const subtitle = document.getElementById("passcode-modal-subtitle");
 
       input.value = "";
-      errAlert.classList.add("hidden");
-
-      if (!state.scriptUrl) {
+      if (!state.isLiveMode) {
         demoHint.classList.remove("hidden");
       } else {
         demoHint.classList.add("hidden");
+      }
+
+      if (isRetry) {
+        subtitle.textContent = "Re-enter passcode to complete your pending save";
+        errorBox.textContent = "Incorrect Teacher Passcode. Please try again to save your edits.";
+        errorBox.classList.remove("hidden");
+      } else {
+        subtitle.textContent = "Enter your Teacher Passcode to add or edit missions";
+        errorBox.classList.add("hidden");
       }
 
       modal.classList.remove("hidden");
@@ -1424,645 +1355,185 @@ function jsonResponse_(obj) {
     }
 
     function closePasscodeModal() {
+      state.pendingSaveRetry = false;
       document.getElementById("passcode-modal").classList.add("hidden");
     }
 
-    async function submitTeacherPasscode(event) {
+    async function submitPasscodeForm(event) {
       event.preventDefault();
       const input = document.getElementById("input-teacher-passcode");
-      const errAlert = document.getElementById("passcode-error-alert");
-      const verifyBtn = document.getElementById("btn-verify-passcode");
-      const spinner = document.getElementById("verify-passcode-spinner");
-
+      const remember = document.getElementById("checkbox-remember-passcode").checked;
+      const errorBox = document.getElementById("passcode-error-msg");
       const entered = (input.value || "").trim();
-      errAlert.classList.add("hidden");
 
       if (!entered) {
-        errAlert.textContent = "Please enter your Teacher Passcode.";
-        errAlert.classList.remove("hidden");
+        errorBox.textContent = "Please enter a Teacher Passcode.";
+        errorBox.classList.remove("hidden");
         return;
       }
 
-      // If Apps Script URL is configured, verify passcode immediately against backend
-      if (state.scriptUrl) {
-        verifyBtn.disabled = true;
-        spinner.classList.remove("hidden");
-
-        try {
-          const res = await fetch(state.scriptUrl, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({
-              action: "verify",
-              passcode: entered,
-            }),
-          });
-
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const result = await res.json();
-
-          if (!result.ok) {
-            errAlert.textContent = result.error || "Incorrect Teacher Passcode.";
-            errAlert.classList.remove("hidden");
-            return;
-          }
-        } catch (err) {
-          console.error("Passcode verification error:", err);
-          errAlert.textContent = "Could not verify passcode with Apps Script URL. Check your network or deployment.";
-          errAlert.classList.remove("hidden");
-          return;
-        } finally {
-          verifyBtn.disabled = false;
-          spinner.classList.add("hidden");
-        }
-      } else {
-        // Offline / Demo Mode verification
-        if (entered !== DEMO_PASSCODE) {
-          errAlert.textContent = `Incorrect Teacher Passcode. (Demo Mode passcode: ${DEMO_PASSCODE})`;
-          errAlert.classList.remove("hidden");
-          return;
-        }
+      // In Demo Mode, validate against DEMO_PASSCODE ("CampusTV2026")
+      if (!state.isLiveMode && entered !== DEMO_PASSCODE) {
+        errorBox.textContent = `Incorrect passcode. Use "${DEMO_PASSCODE}" in Demo Mode.`;
+        errorBox.classList.remove("hidden");
+        return;
       }
 
-      // Passcode Verified -> Unlock Teacher Mode & Mount Teacher UI Elements into DOM
       state.isTeacherUnlocked = true;
       state.teacherPasscode = entered;
-      state.pendingDeleteId = null;
 
-      closePasscodeModal();
-      renderTeacherChrome();
-      renderMissionBoard();
-      showToast("Teacher Mode unlocked.");
+      try {
+        sessionStorage.setItem(STORAGE_KEY_PASSCODE, entered);
+        if (remember) {
+          localStorage.setItem(STORAGE_KEY_PASSCODE, entered);
+        } else {
+          localStorage.removeItem(STORAGE_KEY_PASSCODE);
+        }
+      } catch (_) {}
+
+      const shouldRetrySave = state.pendingSaveRetry;
+      state.pendingSaveRetry = false;
+      document.getElementById("passcode-modal").classList.add("hidden");
+
+      syncTeacherUIState();
+      renderMissionCards();
+
+      if (shouldRetrySave) {
+        const result = await persistMissionsToBackend();
+        if (!result.ok) {
+          showToast(result.error, "error");
+          if (result.error.toLowerCase().includes("passcode")) {
+            state.pendingSaveRetry = true;
+            openPasscodeModal(true);
+          }
+        }
+      } else {
+        showToast("Teacher Mode unlocked");
+      }
     }
 
-    function exitTeacherMode() {
+    function lockTeacherMode() {
       state.isTeacherUnlocked = false;
       state.teacherPasscode = "";
-      state.pendingDeleteId = null;
+      state.confirmDeleteId = null;
+      try {
+        sessionStorage.removeItem(STORAGE_KEY_PASSCODE);
+        localStorage.removeItem(STORAGE_KEY_PASSCODE);
+      } catch (_) {}
 
-      // CRITICAL VISIBILITY REQUIREMENT:
-      // Immediately remove all Setup buttons/icons, Setup modal, Teacher Control Bar, and Editor modal from the DOM!
-      unmountAllTeacherDOM();
-      renderMissionBoard();
-      showToast("Exited Teacher Mode.");
+      syncTeacherUIState();
+      renderMissionCards();
+      showToast("Teacher Mode locked");
     }
 
-    function unmountAllTeacherDOM() {
-      const headerMount = document.getElementById("teacher-header-mount");
-      const barMount = document.getElementById("teacher-bar-mount");
-      const modalsMount = document.getElementById("teacher-modals-mount");
-
-      if (headerMount) headerMount.innerHTML = "";
-      if (barMount) barMount.innerHTML = "";
-      if (modalsMount) modalsMount.innerHTML = "";
-
-      const toggleBtn = document.getElementById("btn-teacher-toggle");
-      const toggleIcon = document.getElementById("icon-teacher-toggle");
-      const toggleLabel = document.getElementById("label-teacher-toggle");
-      const footerNote = document.getElementById("footer-mode-note");
-
-      if (toggleBtn) {
-        toggleBtn.className = "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 transition-colors cursor-pointer";
-      }
-      if (toggleIcon) {
-        toggleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />`;
-      }
-      if (toggleLabel) {
-        toggleLabel.textContent = "Teacher Mode";
-      }
-      if (footerNote) {
-        footerNote.textContent = "Student View · Read-Only Schedule";
-      }
+    // =========================================================================
+    // DELETE MISSION (Inline 2-Step Confirmation)
+    // =========================================================================
+    function requestDeleteMission(missionId) {
+      state.confirmDeleteId = missionId;
+      renderMissionCards();
     }
 
-    function renderTeacherChrome() {
-      if (!state.isTeacherUnlocked) {
-        unmountAllTeacherDOM();
-        return;
-      }
+    function cancelDeleteMission() {
+      state.confirmDeleteId = null;
+      renderMissionCards();
+    }
 
-      const headerMount = document.getElementById("teacher-header-mount");
-      const barMount = document.getElementById("teacher-bar-mount");
-      const toggleBtn = document.getElementById("btn-teacher-toggle");
-      const toggleIcon = document.getElementById("icon-teacher-toggle");
-      const toggleLabel = document.getElementById("label-teacher-toggle");
-      const footerNote = document.getElementById("footer-mode-note");
+    async function confirmDeleteMission(missionId) {
+      const backup = [...state.missions];
+      state.confirmDeleteId = null;
+      state.missions = state.missions.filter((m) => m.id !== missionId);
+      renderStudentDropdown();
+      renderMissionCards();
 
-      // Update Teacher Mode button to "Exit Teacher"
-      toggleBtn.className = "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition-colors cursor-pointer";
-      toggleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />`;
-      toggleLabel.textContent = "Exit Teacher";
-      footerNote.textContent = "Teacher Mode Active · Full Edit & Sync Access";
-
-      // Mount Header Teacher Buttons ("Setup" gear + optional "Open Google Sheet ↗")
-      headerMount.innerHTML = `
-        ${
-          state.sheetUrl
-            ? `<a
-                href="${escapeHTML(state.sheetUrl)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="hidden md:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors"
-              >
-                <span>Open Google Sheet ↗</span>
-              </a>`
-            : ""
+      const result = await persistMissionsToBackend();
+      if (!result.ok) {
+        showToast(result.error, "error");
+        if (result.error.toLowerCase().includes("passcode")) {
+          state.pendingSaveRetry = true;
+          openPasscodeModal(true);
+        } else {
+          state.missions = backup;
+          renderStudentDropdown();
+          renderMissionCards();
         }
-        <button
-          type="button"
-          onclick="openSetupModal()"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200/80 border border-slate-200 transition-colors cursor-pointer"
-          title="Google Sheet Sync & Apps Script Setup"
-        >
-          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span>Setup</span>
-        </button>
-      `;
-
-      // Mount Prominent Teacher Control Bar
-      barMount.innerHTML = `
-        <section class="bg-gradient-to-r from-indigo-50/90 via-white to-amber-50/70 border border-indigo-200/80 rounded-2xl p-4 sm:p-5 shadow-sm animate-fade-up">
-          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div class="space-y-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-600 text-white shadow-2xs">
-                  Teacher Mode
-                </span>
-                <span class="text-xs font-medium text-slate-500">
-                  Quick mobile dispatch &amp; Google Sheet sync controls
-                </span>
-              </div>
-              <p class="text-xs sm:text-sm text-slate-600">
-                Add or edit shoots right here on mobile, or open your Google Sheet for bulk row entry.
-              </p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onclick="openMissionEditorModal(null)"
-                class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors cursor-pointer"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                <span>Quick Add Mission</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="openSetupModal()"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors cursor-pointer"
-              >
-                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Google Sheet Sync &amp; Apps Script Setup</span>
-              </button>
-
-              <button
-                type="button"
-                onclick="handleOpenGoogleSheetClick()"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
-              >
-                <span>Open Google Sheet ↗</span>
-              </button>
-            </div>
-          </div>
-        </section>
-      `;
-    }
-
-    function handleOpenGoogleSheetClick() {
-      if (!state.isTeacherUnlocked) return;
-      if (!state.sheetUrl) {
-        openSetupModal();
-        showToast("Enter your Google Sheet URL in Setup to open it directly.", "error");
-        return;
       }
-      window.open(state.sheetUrl, "_blank", "noopener,noreferrer");
     }
 
     // =========================================================================
-    // TEACHER-ONLY: GOOGLE SHEET SYNC & APPS SCRIPT SETUP MODAL (Dynamically Mounted)
+    // SLIDE-OVER DRAWER: QUICK ADD / EDIT MISSION
     // =========================================================================
-    function openSetupModal() {
-      if (!state.isTeacherUnlocked) return;
-      const mount = document.getElementById("teacher-modals-mount");
+    function openMissionDrawer(missionId) {
+      const wrapper = document.getElementById("mission-drawer-wrapper");
+      const backdrop = document.getElementById("mission-drawer-backdrop");
+      const panel = document.getElementById("mission-drawer-panel");
 
-      mount.innerHTML = `
-        <div
-          id="active-teacher-modal"
-          class="fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="setup-dialog-title"
-          onclick="if (event.target === this) closeActiveTeacherModal();"
-        >
-          <div class="bg-white border border-slate-200 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-fade-up">
-            <!-- Header -->
-            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
-              <div>
-                <h2 id="setup-dialog-title" class="text-base sm:text-lg font-bold text-slate-900">
-                  Google Sheet Sync &amp; Apps Script Setup
-                </h2>
-                <p class="text-xs text-slate-500">Connect your Google Sheet backend (Teacher Only)</p>
-              </div>
-              <button
-                type="button"
-                onclick="closeActiveTeacherModal()"
-                class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                aria-label="Close setup modal"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      const titleEl = document.getElementById("drawer-title");
+      const idInput = document.getElementById("drawer-mission-id");
+      const eventInput = document.getElementById("drawer-event-title");
+      const dateInput = document.getElementById("drawer-event-date");
+      const countInput = document.getElementById("drawer-event-count");
+      const notesInput = document.getElementById("drawer-event-notes");
+      const searchInput = document.getElementById("drawer-crew-search");
 
-            <!-- Scrollable Content -->
-            <div class="flex-1 overflow-y-auto p-5 space-y-5">
-              <!-- GitHub Pages Pre-configuration Tip -->
-              <div class="bg-indigo-50/80 border border-indigo-200/80 rounded-xl p-3.5 text-xs text-indigo-950 space-y-1">
-                <p class="font-bold text-indigo-800">Publishing to GitHub Pages (index.html):</p>
-                <p class="leading-relaxed text-indigo-900/90">
-                  Paste your <code class="bg-white/80 px-1 py-0.5 rounded border border-indigo-200">/exec</code> Web App URL into
-                  <code class="bg-white/80 px-1 py-0.5 rounded border border-indigo-200 font-semibold">DEFAULT_SCRIPT_URL</code> at the top of
-                  <code class="bg-white/80 px-1 py-0.5 rounded border border-indigo-200">index.html</code> before uploading to GitHub so students automatically load the live schedule without configuring anything.
-                </p>
-              </div>
+      searchInput.value = "";
 
-              <!-- URLs Form -->
-              <form onsubmit="submitSetupUrls(event)" class="space-y-4">
-                <div>
-                  <label for="field-script-url" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                    Google Apps Script Web App URL (<code class="normal-case text-indigo-600">.../exec</code>)
-                  </label>
-                  <input
-                    type="url"
-                    id="field-script-url"
-                    value="${escapeHTML(state.scriptUrl)}"
-                    placeholder="https://script.google.com/macros/s/AKfycbx.../exec"
-                    class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label for="field-sheet-url" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                    Google Sheet URL (Optional — auto-populated on sync)
-                  </label>
-                  <input
-                    type="url"
-                    id="field-sheet-url"
-                    value="${escapeHTML(state.sheetUrl)}"
-                    placeholder="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit"
-                    class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 outline-none"
-                  />
-                </div>
-
-                <div class="flex flex-wrap items-center justify-end gap-2 pt-1">
-                  <button
-                    type="submit"
-                    class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors cursor-pointer"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Save &amp; Sync Now</span>
-                  </button>
-                </div>
-              </form>
-
-              <!-- Expandable / Copyable Latest Code.gs Block -->
-              <div class="border border-slate-200 rounded-2xl overflow-hidden">
-                <div class="px-4 py-3 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onclick="toggleSetupCodeBlock()"
-                    class="inline-flex items-center gap-2 text-left text-xs sm:text-sm font-bold text-slate-800 hover:text-indigo-700 transition-colors cursor-pointer"
-                  >
-                    <svg id="setup-code-chevron" class="w-4 h-4 text-slate-500 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                    <span>Latest Google Apps Script (<code class="text-indigo-600">Code.gs</code>)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onclick="copyEmbeddedCodeGs()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-slate-800 hover:bg-slate-900 transition-colors cursor-pointer"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <span>Copy Code.gs</span>
-                  </button>
-                </div>
-
-                <div id="setup-code-drawer" class="hidden border-t border-slate-200 p-3.5 bg-slate-900">
-                  <pre class="text-slate-100 text-[11px] leading-relaxed font-mono overflow-x-auto max-h-64">${escapeHTML(CODE_GS_TEMPLATE)}</pre>
-                </div>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
-              <button
-                type="button"
-                onclick="closeActiveTeacherModal()"
-                class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function toggleSetupCodeBlock() {
-      const drawer = document.getElementById("setup-code-drawer");
-      const chevron = document.getElementById("setup-code-chevron");
-      if (!drawer) return;
-      const isHidden = drawer.classList.contains("hidden");
-      if (isHidden) {
-        drawer.classList.remove("hidden");
-        if (chevron) chevron.classList.add("rotate-180");
+      if (missionId) {
+        const mission = state.missions.find((m) => m.id === missionId);
+        if (!mission) return;
+        titleEl.textContent = "Edit Mission";
+        idInput.value = mission.id;
+        eventInput.value = mission.title || "";
+        dateInput.value = mission.date || TODAY_ISO;
+        countInput.value = Number(mission.count) || 1;
+        notesInput.value = mission.notes || "";
+        state.drawer.selectedIcon = mission.icon || "🎬";
+        state.drawer.selectedCrewNames = Array.isArray(mission.crew) ? [...mission.crew] : [];
       } else {
-        drawer.classList.add("hidden");
-        if (chevron) chevron.classList.remove("rotate-180");
-      }
-    }
-
-    function copyEmbeddedCodeGs() {
-      if (copyTextFallback(CODE_GS_TEMPLATE)) {
-        showToast("Code.gs copied to clipboard!");
-      } else {
-        showToast("Expand Code.gs and copy manually.", "error");
-      }
-    }
-
-    async function submitSetupUrls(event) {
-      event.preventDefault();
-      if (!state.isTeacherUnlocked) return;
-
-      const scriptInput = document.getElementById("field-script-url");
-      const sheetInput = document.getElementById("field-sheet-url");
-
-      state.scriptUrl = (scriptInput.value || "").trim();
-      state.sheetUrl = (sheetInput.value || "").trim();
-      persistUrls();
-
-      closeActiveTeacherModal();
-      await fetchMissionsFromSheet(true);
-    }
-
-    // =========================================================================
-    // TEACHER-ONLY: QUICK ADD / EDIT MISSION DRAWER MODAL (Dynamically Mounted)
-    // =========================================================================
-    function openMissionEditorModal(missionId) {
-      if (!state.isTeacherUnlocked) return;
-      const mount = document.getElementById("teacher-modals-mount");
-
-      const existing = missionId ? state.missions.find((m) => m.id === missionId) : null;
-      const isEditing = Boolean(existing);
-
-      state.editor.selectedIcon = existing ? existing.icon || "🎬" : "🎬";
-
-      // Resolve selected studentIds from existing mission
-      if (existing) {
-        const unified = buildUnifiedCrewList(existing);
-        state.editor.selectedStudentIds = unified
-          .map((u) => {
-            if (u.studentId) return u.studentId;
-            const found = state.students.find((s) => s.name === u.name);
-            return found ? found.studentId : "";
-          })
-          .filter(Boolean);
-      } else {
-        state.editor.selectedStudentIds = [];
+        titleEl.textContent = "Quick Add Mission";
+        idInput.value = "";
+        eventInput.value = "";
+        dateInput.value = TODAY_ISO;
+        countInput.value = 1;
+        notesInput.value = "";
+        state.drawer.selectedIcon = "🎬";
+        state.drawer.selectedCrewNames = [];
       }
 
-      mount.innerHTML = `
-        <div
-          id="active-teacher-modal"
-          class="fixed inset-0 z-50 modal-backdrop flex items-end sm:items-center justify-center p-0 sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="editor-modal-heading"
-          onclick="if (event.target === this) closeActiveTeacherModal();"
-        >
-          <div class="bg-white border border-slate-200 rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden animate-fade-up">
-            <!-- Header -->
-            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
-              <div>
-                <h2 id="editor-modal-heading" class="text-base sm:text-lg font-bold text-slate-900">
-                  ${isEditing ? "Edit Mission Details" : "Quick Add Mission"}
-                </h2>
-                <p class="text-xs text-slate-500">
-                  Expands to 1 row per assigned student in Google Sheets
-                </p>
-              </div>
-              <button
-                type="button"
-                onclick="closeActiveTeacherModal()"
-                class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                aria-label="Close mission editor"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+      renderDrawerEmojiPicker();
+      renderDrawerCrewPills();
 
-            <!-- Scrollable Form -->
-            <form id="form-mission-editor" onsubmit="submitMissionEditorForm(event)" class="flex-1 overflow-y-auto p-5 space-y-5">
-              <input type="hidden" id="editor-mission-id" value="${isEditing ? escapeHTML(existing.id) : ""}" />
-
-              <!-- 18-Emoji Icon Picker Grid + Custom Emoji Input -->
-              <div>
-                <div class="flex items-center justify-between gap-2 mb-2">
-                  <label class="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Mission Icon
-                  </label>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[11px] text-slate-500">Custom:</span>
-                    <input
-                      type="text"
-                      id="editor-custom-emoji"
-                      maxlength="4"
-                      value="${escapeHTML(state.editor.selectedIcon)}"
-                      oninput="onCustomEmojiInput(this.value)"
-                      class="w-14 text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-lg py-1 text-base outline-none"
-                      aria-label="Custom emoji icon"
-                    />
-                  </div>
-                </div>
-                <div id="editor-emoji-grid" class="grid grid-cols-6 sm:grid-cols-9 gap-1.5">
-                  <!-- Populated via renderEditorEmojiPresets() -->
-                </div>
-              </div>
-
-              <!-- Event Name -->
-              <div>
-                <label for="editor-event-title" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                  Event Name <span class="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="editor-event-title"
-                  required
-                  value="${isEditing ? escapeHTML(existing.title) : ""}"
-                  placeholder="e.g. Inter-House Basketball Final"
-                  class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none"
-                />
-              </div>
-
-              <!-- Date Picker & Count Stepper -->
-              <div class="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                <div class="sm:col-span-7">
-                  <label for="editor-event-date" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                    Date <span class="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="editor-event-date"
-                    required
-                    value="${isEditing ? escapeHTML(existing.date) : TODAY_ISO}"
-                    class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none"
-                  />
-                </div>
-
-                <div class="sm:col-span-5">
-                  <label for="editor-event-count" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                    Count (Sessions)
-                  </label>
-                  <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onclick="adjustEditorCount(-1)"
-                      class="w-11 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
-                      aria-label="Decrease count"
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      id="editor-event-count"
-                      min="1"
-                      max="25"
-                      required
-                      value="${isEditing ? Number(existing.count) || 1 : 1}"
-                      class="flex-1 text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-xl py-2 text-sm font-bold text-slate-900 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onclick="adjustEditorCount(1)"
-                      class="w-11 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
-                      aria-label="Increase count"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Remarks -->
-              <div>
-                <label for="editor-event-notes" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                  Remarks (Venue, Time &amp; Gear)
-                </label>
-                <textarea
-                  id="editor-event-notes"
-                  rows="2"
-                  placeholder="e.g. School Hall · 15:45 · Gimbal + 70-200mm lens"
-                  class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 outline-none"
-                >${isEditing ? escapeHTML(existing.notes) : ""}</textarea>
-              </div>
-
-              <!-- Crew Assignment Section -->
-              <div class="space-y-2.5">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <label for="editor-crew-search" class="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Crew Assignment (<span id="editor-crew-count-label" class="text-indigo-600">0 selected</span>)
-                  </label>
-                  <button
-                    type="button"
-                    onclick="clearEditorCrewSelection()"
-                    class="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline cursor-pointer"
-                  >
-                    Clear Selection
-                  </button>
-                </div>
-
-                <!-- Search input -->
-                <div class="relative">
-                  <input
-                    type="text"
-                    id="editor-crew-search"
-                    oninput="renderEditorCrewPills()"
-                    placeholder="Search student by name, class (4A), or ID (S2026001)..."
-                    class="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-indigo-500 rounded-xl pl-9 pr-3.5 py-2 text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none"
-                  />
-                  <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-
-                <!-- Tappable Student Pills -->
-                <div
-                  id="editor-crew-pills-box"
-                  class="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-3 bg-slate-50 border border-slate-200/80 rounded-2xl"
-                >
-                  <!-- Populated via renderEditorCrewPills() -->
-                </div>
-              </div>
-            </form>
-
-            <!-- Footer -->
-            <div class="px-5 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
-              <button
-                type="button"
-                onclick="closeActiveTeacherModal()"
-                class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-slate-600 hover:bg-slate-200/70 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="form-mission-editor"
-                id="btn-submit-mission-editor"
-                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-colors cursor-pointer"
-              >
-                <span id="editor-save-spinner" class="hidden w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                <span>Save &amp; Sync</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      renderEditorEmojiPresets();
-      renderEditorCrewPills();
+      wrapper.classList.remove("hidden");
+      requestAnimationFrame(() => {
+        backdrop.classList.remove("opacity-0");
+        panel.classList.remove("translate-x-full");
+      });
     }
 
-    function renderEditorEmojiPresets() {
-      const grid = document.getElementById("editor-emoji-grid");
-      if (!grid) return;
+    function closeMissionDrawer() {
+      const wrapper = document.getElementById("mission-drawer-wrapper");
+      const backdrop = document.getElementById("mission-drawer-backdrop");
+      const panel = document.getElementById("mission-drawer-panel");
 
-      grid.innerHTML = MISSION_ICON_PRESETS.map((emoji) => {
-        const selected = state.editor.selectedIcon === emoji;
+      backdrop.classList.add("opacity-0");
+      panel.classList.add("translate-x-full");
+
+      setTimeout(() => {
+        wrapper.classList.add("hidden");
+      }, 210);
+    }
+
+    function renderDrawerEmojiPicker() {
+      const grid = document.getElementById("drawer-emoji-grid");
+      grid.innerHTML = CURATED_EMOJIS.map((emoji) => {
+        const active = state.drawer.selectedIcon === emoji;
         return `
           <button
             type="button"
-            onclick="selectPresetEmoji('${emoji}')"
-            class="h-10 rounded-xl text-lg sm:text-xl flex items-center justify-center transition-all cursor-pointer ${
-              selected
-                ? "bg-indigo-600 ring-2 ring-indigo-300 shadow-2xs scale-105"
+            onclick="selectDrawerEmoji('${emoji}')"
+            class="h-10 sm:h-11 rounded-xl text-xl flex items-center justify-center transition-all cursor-pointer ${
+              active
+                ? "bg-indigo-600 ring-2 ring-indigo-300 shadow-xs scale-105"
                 : "bg-slate-50 hover:bg-indigo-50 border border-slate-200/80"
             }"
             aria-label="Choose ${emoji}"
@@ -2073,81 +1544,66 @@ function jsonResponse_(obj) {
       }).join("");
     }
 
-    function selectPresetEmoji(emoji) {
-      state.editor.selectedIcon = emoji;
-      const customInput = document.getElementById("editor-custom-emoji");
-      if (customInput) customInput.value = emoji;
-      renderEditorEmojiPresets();
+    function selectDrawerEmoji(emoji) {
+      state.drawer.selectedIcon = emoji;
+      renderDrawerEmojiPicker();
     }
 
-    function onCustomEmojiInput(val) {
-      const trimmed = (val || "").trim();
-      if (trimmed) {
-        state.editor.selectedIcon = trimmed;
-        renderEditorEmojiPresets();
-      }
+    function adjustDrawerCount(delta) {
+      const input = document.getElementById("drawer-event-count");
+      const current = Number(input.value) || 1;
+      input.value = Math.max(1, Math.min(20, current + delta));
     }
 
-    function adjustEditorCount(delta) {
-      const input = document.getElementById("editor-event-count");
-      if (!input) return;
-      const cur = Number(input.value) || 1;
-      input.value = Math.max(1, Math.min(25, cur + delta));
-    }
+    function renderDrawerCrewPills() {
+      const container = document.getElementById("drawer-crew-pills");
+      const query = (document.getElementById("drawer-crew-search").value || "").trim().toLowerCase();
+      const countLabel = document.getElementById("drawer-crew-selected-count");
+      const rowsHint = document.getElementById("drawer-sheet-rows-hint");
 
-    function renderEditorCrewPills() {
-      const box = document.getElementById("editor-crew-pills-box");
-      const searchInput = document.getElementById("editor-crew-search");
-      const countLabel = document.getElementById("editor-crew-count-label");
-      if (!box) return;
-
-      const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
-      const selectedIds = state.editor.selectedStudentIds;
-
-      if (countLabel) {
-        countLabel.textContent = `${selectedIds.length} selected`;
-      }
+      const selectedCount = state.drawer.selectedCrewNames.length;
+      countLabel.textContent = `${selectedCount} selected`;
+      rowsHint.textContent = `${selectedCount} row${selectedCount === 1 ? "" : "s"} in Sheet`;
 
       const sortedStudents = [...state.students].sort((a, b) => {
-        const cCmp = (a.className || "").localeCompare(b.className || "");
-        if (cCmp !== 0) return cCmp;
-        return (a.classNo || "").localeCompare(b.classNo || "");
+        const classCmp = (a.className || "").localeCompare(b.className || "");
+        if (classCmp !== 0) return classCmp;
+        const noCmp = (a.classNo || "").localeCompare(b.classNo || "");
+        if (noCmp !== 0) return noCmp;
+        return (a.name || "").localeCompare(b.name || "");
       });
 
       const matches = sortedStudents.filter((s) => {
         if (!query) return true;
         return (
-          (s.name || "").toLowerCase().includes(query) ||
           (s.className || "").toLowerCase().includes(query) ||
-          (s.studentId || "").toLowerCase().includes(query)
+          (s.studentId || "").toLowerCase().includes(query) ||
+          (s.name || "").toLowerCase().includes(query)
         );
       });
 
       if (matches.length === 0) {
-        box.innerHTML = `<p class="text-xs text-slate-400 py-1.5">No matching students found.</p>`;
+        container.innerHTML = `<p class="text-xs text-slate-400 py-2">No students match "${escapeHTML(query)}".</p>`;
         return;
       }
 
-      box.innerHTML = matches
+      container.innerHTML = matches
         .map((s) => {
-          const sid = s.studentId || s.name;
-          const isSelected = selectedIds.includes(sid);
+          const isSelected = state.drawer.selectedCrewNames.includes(s.name);
           const pillStyle = isSelected
             ? "bg-indigo-600 text-white border-indigo-600 font-semibold shadow-2xs"
             : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 font-medium";
 
-          const classNoPrefix = `${s.className || ""}${s.classNo ? ` ${s.classNo}` : ""}`.trim();
-
           return `
             <button
               type="button"
-              onclick="toggleEditorCrewStudent('${escapeHTML(sid)}')"
+              onclick="toggleDrawerCrewMember('${escapeHTML(s.name)}')"
               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs border transition-all cursor-pointer ${pillStyle}"
             >
               <span>${isSelected ? "✓" : "+"}</span>
               ${
-                classNoPrefix
-                  ? `<span class="${isSelected ? "text-indigo-200" : "text-slate-400"} font-bold">${escapeHTML(classNoPrefix)} ·</span>`
+                s.className
+                  ? `<span class="${isSelected ? "text-indigo-200" : "text-slate-400"} font-bold">${escapeHTML(s.className)} ·</span>`
                   : ""
               }
               <span>${escapeHTML(s.name)}</span>
@@ -2157,141 +1613,124 @@ function jsonResponse_(obj) {
         .join("");
     }
 
-    function toggleEditorCrewStudent(sid) {
-      const idx = state.editor.selectedStudentIds.indexOf(sid);
+    function toggleDrawerCrewMember(studentName) {
+      const idx = state.drawer.selectedCrewNames.indexOf(studentName);
       if (idx === -1) {
-        state.editor.selectedStudentIds.push(sid);
+        state.drawer.selectedCrewNames.push(studentName);
       } else {
-        state.editor.selectedStudentIds.splice(idx, 1);
+        state.drawer.selectedCrewNames.splice(idx, 1);
       }
-      renderEditorCrewPills();
+      renderDrawerCrewPills();
     }
 
-    function clearEditorCrewSelection() {
-      state.editor.selectedStudentIds = [];
-      renderEditorCrewPills();
+    function setDrawerSavingState(isSaving) {
+      const btn = document.getElementById("btn-drawer-save");
+      const spinner = document.getElementById("icon-save-spinner");
+      const check = document.getElementById("icon-save-check");
+      const label = document.getElementById("label-drawer-save");
+
+      btn.disabled = isSaving;
+      if (isSaving) {
+        spinner.classList.remove("hidden");
+        check.classList.add("hidden");
+        label.textContent = "Syncing...";
+      } else {
+        spinner.classList.add("hidden");
+        check.classList.remove("hidden");
+        label.textContent = "Save & Sync";
+      }
     }
 
-    async function submitMissionEditorForm(event) {
+    async function handleSaveMissionForm(event) {
       event.preventDefault();
-      if (!state.isTeacherUnlocked) return;
 
-      const saveBtn = document.getElementById("btn-submit-mission-editor");
-      const spinner = document.getElementById("editor-save-spinner");
-
-      const missionId = document.getElementById("editor-mission-id").value;
-      const title = document.getElementById("editor-event-title").value.trim();
-      const date = document.getElementById("editor-event-date").value;
-      const count = Math.max(1, Number(document.getElementById("editor-event-count").value) || 1);
-      const notes = document.getElementById("editor-event-notes").value.trim();
-      const icon = (state.editor.selectedIcon || "🎬").trim() || "🎬";
+      const missionId = document.getElementById("drawer-mission-id").value;
+      const title = document.getElementById("drawer-event-title").value.trim();
+      const date = document.getElementById("drawer-event-date").value;
+      const count = Math.max(1, Number(document.getElementById("drawer-event-count").value) || 1);
+      const notes = document.getElementById("drawer-event-notes").value.trim();
+      const icon = state.drawer.selectedIcon || "🎬";
+      const crew = [...state.drawer.selectedCrewNames];
 
       if (!title || !date) return;
 
-      // Build crew & crewDetails arrays from selectedStudentIds
-      const crewDetails = state.editor.selectedStudentIds.map((sid) => {
-        const stu = state.students.find((s) => (s.studentId || s.name) === sid);
-        return stu
-          ? {
-              studentId: stu.studentId,
-              name: stu.name,
-              className: stu.className,
-              classNo: stu.classNo,
-            }
-          : { studentId: sid, name: sid, className: "", classNo: "" };
+      const crewDetails = crew.map((memberName) => {
+        const stu = getStudentByName(memberName);
+        return {
+          studentId: stu ? stu.studentId : "",
+          name: memberName,
+          className: stu ? stu.className : "",
+          classNo: stu ? stu.classNo : "",
+        };
       });
-      const crew = crewDetails.map((cd) => cd.name);
+
       const status = date < TODAY_ISO ? "Completed" : "Upcoming";
 
-      saveBtn.disabled = true;
-      spinner.classList.remove("hidden");
+      setDrawerSavingState(true);
 
       if (missionId) {
         const idx = state.missions.findIndex((m) => m.id === missionId);
         if (idx !== -1) {
           state.missions[idx] = {
             ...state.missions[idx],
-            date,
             title,
-            crew,
-            crewDetails,
+            date,
             count,
             notes,
             icon,
+            crew,
+            crewDetails,
             status,
           };
         }
       } else {
         state.missions.push({
-          id: `m_${Date.now()}`,
-          date,
+          id: `mission_${Date.now()}`,
           title,
-          crew,
-          crewDetails,
+          date,
           count,
           notes,
           icon,
+          crew,
+          crewDetails,
           status,
         });
       }
 
-      await saveMissionsToBackend();
+      renderStudentDropdown();
+      renderMissionCards();
 
-      saveBtn.disabled = false;
-      spinner.classList.add("hidden");
-      closeActiveTeacherModal();
-      renderStudentFilterDropdown();
-      renderMissionBoard();
-    }
+      const result = await persistMissionsToBackend();
+      setDrawerSavingState(false);
 
-    function requestDeleteMission(missionId) {
-      if (!state.isTeacherUnlocked) return;
-      state.pendingDeleteId = missionId;
-      renderMissionBoard();
-    }
-
-    function cancelDeleteMission() {
-      state.pendingDeleteId = null;
-      renderMissionBoard();
-    }
-
-    async function confirmDeleteMission(missionId) {
-      if (!state.isTeacherUnlocked) return;
-      state.missions = state.missions.filter((m) => m.id !== missionId);
-      state.pendingDeleteId = null;
-      renderStudentFilterDropdown();
-      renderMissionBoard();
-      await saveMissionsToBackend();
-    }
-
-    function closeActiveTeacherModal() {
-      const mount = document.getElementById("teacher-modals-mount");
-      if (mount) mount.innerHTML = "";
-    }
-
-    // =========================================================================
-    // GLOBAL KEYBOARD & BACKDROP HANDLERS
-    // =========================================================================
-    document.getElementById("passcode-modal").addEventListener("click", (e) => {
-      if (e.target.id === "passcode-modal") {
-        closePasscodeModal();
+      if (result.ok) {
+        closeMissionDrawer();
+      } else {
+        showToast(result.error, "error");
+        if (result.error.toLowerCase().includes("passcode")) {
+          // Keep edits intact in state and re-prompt for passcode
+          closeMissionDrawer();
+          state.pendingSaveRetry = true;
+          openPasscodeModal(true);
+        }
       }
-    });
+    }
 
+    // Close modals/drawer on Escape key
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closePasscodeModal();
-        closeActiveTeacherModal();
+        closeMissionDrawer();
       }
     });
 
     // =========================================================================
-    // BOOTSTRAP APPLICATION
+    // INITIALIZE APPLICATION
     // =========================================================================
     window.addEventListener("DOMContentLoaded", () => {
-      initConfigAndData();
-      unmountAllTeacherDOM(); // Strictly ensure Student View starts with zero Setup elements in DOM
-      fetchMissionsFromSheet(false);
+      restoreSavedPasscodeSession();
+      syncTeacherUIState();
+      loadBoardData(false);
     });
   </script>
 </body>
